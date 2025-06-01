@@ -1,0 +1,229 @@
+/* styles for app/static/css/documents.css */
+
+body {
+    background: #f0f2f5; /* Slightly different background for admin page */
+}
+
+.container {
+    max-width: 1000px; /* Adjusted max-width for this page */
+}
+
+.header {
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.header h1 {
+    color: #333;
+    font-size: 1.8rem;
+}
+
+.btn-nav {
+    background-color: #667eea;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+}
+.btn-nav:hover {
+    background-color: #5a67d8;
+}
+
+.main-content-docs {
+    padding-top: 20px;
+    display: grid;
+    gap: 25px;
+}
+
+.doc-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.doc-section h2 {
+    font-size: 1.5rem;
+    color: #2d3748;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 8px;
+    display: inline-block;
+}
+
+.doc-section p {
+    font-size: 0.95rem;
+    color: #4a5568;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+#file-input {
+    display: block;
+    margin: 15px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: calc(100% - 22px); /* Full width minus padding */
+}
+
+.btn { /* General button styling, can be enhanced in style.css too */
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-primary {
+    background-color: #667eea;
+    color: white;
+    border: none;
+}
+.btn-primary:hover {
+    background-color: #5a67d8;
+    transform: translateY(-1px);
+}
+.btn-primary:disabled {
+    background-color: #a0aec0;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background-color: #e2e8f0;
+    color: #2d3748;
+    border: 1px solid #cbd5e0;
+}
+.btn-secondary:hover {
+    background-color: #cbd5e0;
+}
+
+.btn-sm {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+}
+
+.btn-danger {
+    background-color: #f56565;
+    color: white;
+    border: none;
+}
+.btn-danger:hover {
+    background-color: #e53e3e;
+}
+
+
+.status-message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    display: none; /* Hidden by default */
+}
+.status-message.success {
+    background-color: #c6f6d5;
+    color: #2f855a;
+    border: 1px solid #9ae6b4;
+    display: block;
+}
+.status-message.error {
+    background-color: #fed7d7;
+    color: #c53030;
+    border: 1px solid #fc8181;
+    display: block;
+}
+.status-message.info {
+    background-color: #eBF4FF;
+    color: #3182CE;
+    border: 1px solid #90CDF4;
+    display: block;
+}
+
+
+#document-list {
+    list-style: none;
+    padding: 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#document-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.95rem;
+}
+
+#document-list li:last-child {
+    border-bottom: none;
+}
+
+#document-list .doc-name {
+    flex-grow: 1;
+    color: #2d3748;
+}
+#document-list .doc-size {
+    min-width: 100px;
+    text-align: right;
+    color: #718096;
+    font-size: 0.85rem;
+    margin-right: 15px;
+}
+#document-list .doc-actions button {
+    margin-left: 8px;
+}
+
+.controls {
+    margin-bottom: 15px;
+    text-align: right;
+}
+
+#kb-status-content p {
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+#kb-status-content strong {
+    color: #2d3748;
+}
+#kb-chunks, #kb-ready-status {
+    font-weight: bold;
+    color: #667eea;
+}
+
+/* Loading spinner */
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #667eea;
+    animation: spin 1s ease infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive adjustments if needed */
+@media (max-width: 768px) {
+    .main-content-docs {
+        grid-template-columns: 1fr; /* Stack sections on smaller screens */
+    }
+    .header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .header h1 {
+        font-size: 1.5rem;
+    }
+}

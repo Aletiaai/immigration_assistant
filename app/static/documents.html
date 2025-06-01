@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Management - Immigration RAG</title>
+    <link rel="stylesheet" href="/static/css/style.css"> <!-- We can reuse or extend this -->
+    <link rel="stylesheet" href="/static/css/documents.css"> <!-- Specific styles for this page -->
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Immigration RAG - Document Management</h1>
+            <nav>
+                <a href="/" class="btn btn-nav">Chat Interface</a>
+            </nav>
+        </header>
+
+        <div class="main-content-docs">
+            <!-- Upload Section -->
+            <div class="doc-section card" id="upload-section">
+                <h2>Upload New Document</h2>
+                <p>Upload PDF documents to be processed and added to the knowledge base.</p>
+                <input type="file" id="file-input" accept=".pdf">
+                <button id="upload-btn" class="btn btn-primary">Upload PDF</button>
+                <div id="upload-status" class="status-message"></div>
+            </div>
+
+            <!-- Document List Section -->
+            <div class="doc-section card" id="list-section">
+                <h2>Uploaded Documents</h2>
+                <p>These are the raw PDF documents stored in the system.</p>
+                <div class="controls">
+                    <button id="refresh-docs-btn" class="btn btn-secondary btn-sm">Refresh List</button>
+                </div>
+                <ul id="document-list">
+                    <!-- Documents will be listed here by JavaScript -->
+                </ul>
+                <div id="list-status" class="status-message">Loading documents or no documents found.</div>
+            </div>
+
+            <!-- Vector Store Status Section -->
+            <div class="doc-section card" id="kb-status-section">
+                <h2>Knowledge Base Status</h2>
+                <p>Current status of the indexed document chunks in the vector store.</p>
+                 <div class="controls">
+                    <button id="refresh-kb-status-btn" class="btn btn-secondary btn-sm">Refresh Status</button>
+                </div>
+                <div id="kb-status-content">
+                    <p><strong>Total Indexed Chunks:</strong> <span id="kb-chunks">N/A</span></p>
+                    <p><strong>Knowledge Base Status:</strong> <span id="kb-ready-status">N/A</span></p>
+                </div>
+                <div id="kb-status-message" class="status-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/documents.js"></script> <!-- New JS file for this page -->
+</body>
+</html>

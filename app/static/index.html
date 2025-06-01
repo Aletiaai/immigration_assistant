@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Immigration RAG Chat</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Immigration Law Assistant</h1>
+            <div class="status-bar">
+                <span id="status">Ready</span>
+                <button id="clear-chat" class="btn btn-secondary">Clear Chat</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="chat-container">
+                <div id="chat-messages" class="chat-messages">
+                    <div class="welcome-message">
+                        <h2>Immigration Law Assistant</h2>
+                        <p>Ask me any questions about immigration processes and laws.</p>
+                        <p>You can ask questions in English or Spanish - I'll respond in the same language.</p>
+                        <div class="example-questions">
+                            <p><strong>Example questions:</strong></p>
+                            <ul>
+                                <li>"What documents do I need for permanent residency?"</li>
+                                <li>"¿Cuáles son los requisitos para la ciudadanía?"</li>
+                                <li>"How long does the visa process take?"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <div class="input-group">
+                        <textarea id="message-input" placeholder="Ask your question about immigration..." rows="2" maxlength="1000"></textarea>
+                        <button id="send-btn" class="btn btn-primary">Send</button>
+                    </div>
+                    <div class="input-info">
+                        <small>Press Shift+Enter for new line, Enter to send</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/chat.js"></script>
+</body>
+</html>
