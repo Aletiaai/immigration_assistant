@@ -57,7 +57,6 @@ class RAGService:
 
             # Step 3: Store in vector database
             logger.info(f"--- RAGService: Step 3 - Adding {len(chunks)} documents (with embeddings) to vector store. ---")
-            # Ensure metadatas are correctly formed, especially 'source'
             # Get filename from path for the source metadata
             source_filename = file_path.split('/')[-1] if '/' in file_path else file_path.split('\\')[-1] if '\\' in file_path else file_path
 
@@ -102,14 +101,12 @@ class RAGService:
             logger.info(f"--- RAGService: Searching vector store... ---")
             search_results = self.vector_store.search(query_embedding, n_results= MAX_CHUNKS_RETRIEVED)
             logger.info(f"--- RAGService: Found {len(search_results)} search results. ---")
-            
-            # Build context from search results
-            context = self._build_context(search_results)
-            
-            # Create prompt with chat history
-            logger.info(f"--- RAGService: Building prompt... ---")
-            prompt = self._build_prompt(question, context, chat_history, language)
-            
+
+            # Create prompt with citations
+            logger.info(f"--- RAGService: Building prompt with citations... ---")
+            context = self._build_context(search_results)  # Fallback
+            prompt = self._build_prompt(question, context, search_results, chat_history, language)
+
             # Generate response
             logger.info(f"--- RAGService: Generating response from LLM... ---")
             response_text = self.llm_client.generate_response(prompt)
@@ -142,14 +139,27 @@ class RAGService:
         except Exception as e:
             return ""
     
-    def _build_prompt(self, question: str, context: str, chat_history: List[Dict], language: str) -> str:
+    def _build_prompt(self, question: str, context: str, search_results: List[Dict], chat_history: List[Dict], language: str) -> str:
         try:
+            # Build numbered context with source references
+            numbered_context = []
+            for i, result in enumerate(search_results, 1):
+                source = result.get('metadata', {}).get('source', 'Unknown')
+                page = result.get('metadata', {}).get('page', '')
+                page_ref = f", page {page}" if page else ""
+                
+                numbered_context.append(f"[{i}] {result['content']}\nSource: {source}{page_ref}")
+            
+            context_with_sources = "\n\n".join(numbered_context)
+            
             if language == "spanish":
-                system_msg = "Eres un asistente especializado en leyes de inmigración. Responde basándote únicamente en el contexto proporcionado."
-                prompt_template = f"{system_msg}\n\nContexto:\n{context}\n\nPregunta: {question}\nRespuesta:"
+                system_msg = """Eres un asistente especializado en leyes de inmigración. Responde basándote únicamente en el contexto proporcionado.
+    IMPORTANTE: Incluye citas en tu respuesta usando el formato [número] para referenciar las fuentes del contexto."""
+                prompt_template = f"{system_msg}\n\nContexto:\n{context_with_sources}\n\nPregunta: {question}\nRespuesta:"
             else:
-                system_msg = "You are an immigration law specialist assistant. Answer based only on the provided context."
-                prompt_template = f"{system_msg}\n\nContext:\n{context}\n\nQuestion: {question}\nAnswer:"
+                system_msg = """You are an immigration law specialist assistant. Answer based only on the provided context.
+    IMPORTANT: Include citations in your response using [number] format to reference the context sources."""
+                prompt_template = f"{system_msg}\n\nContext:\n{context_with_sources}\n\nQuestion: {question}\nAnswer:"
             
             # Add chat history if exists
             if chat_history:
@@ -158,6 +168,7 @@ class RAGService:
             
             return prompt_template
         except Exception as e:
+            logger.error(f"Error building prompt: {str(e)}")
             return f"Context: {context}\nQuestion: {question}\nAnswer:"
     
     def _format_chat_history(self, chat_history: List[Dict]) -> str:
