@@ -27,3 +27,6 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Data base
+*/data/
