@@ -47,7 +47,7 @@ async def chat_endpoint(message: ChatMessage, session_id: str = "default", servi
             chat_sessions[session_id] = []
         chat_sessions[session_id].append(chat_history)
         
-        # Keep only last de number of messages per session defined in app/core/config.py
+        # Keep only last MAX_MESSAGES_PER_SESION number of messages per session defined in app/core/config.py
         if len(chat_sessions[session_id]) > MAX_MESSAGES_PER_SESSION:
             chat_sessions[session_id] = chat_sessions[session_id][-MAX_MESSAGES_PER_SESSION:]
         

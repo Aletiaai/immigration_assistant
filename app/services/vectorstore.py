@@ -25,10 +25,12 @@ class VectorStoreService:
 
             documents = [chunk["content"] for chunk in chunks]
             metadatas = [{
-                "page": str(chunk.get("page", "N/A")), # Ensure page is string for Chroma
+                "page": str(chunk.get("page", "N/A")),
                 "type": chunk.get("type", "block"),
                 "source": chunk.get("document_name", "unknown_source"),
-                "header": chunk.get("header", DEFAULT_HEADER_TEXT)
+                "header": chunk.get("header", DEFAULT_HEADER_TEXT),
+                "questions": "|".join(chunk.get("questions", [])),  # Store questions as pipe-separated string
+                "original_content": chunk.get("original_content", chunk["content"])  # Store original content
             } for chunk in chunks]
             
             self.collection.add(

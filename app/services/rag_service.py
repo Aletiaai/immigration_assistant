@@ -4,6 +4,8 @@ from app.services.embeddings import EmbeddingService
 from app.services.vectorstore import VectorStoreService
 from app.services.data_loader import DocumentProcessor
 from app.core.config import CONTEXT_HISTORY_MESSAGES, GOOGLE_PROJECT_ID, GOOGLE_LOCATION, GOOGLE_PROCESSOR_ID, MAX_CHUNKS_RETRIEVED
+from app.core.prompts import get_system_prompt, get_prompt_template
+
 import re
 import logging
 
@@ -44,7 +46,15 @@ class RAGService:
 
             # Step 2: Generate embeddings
             logger.info(f"--- RAGService: Step 2 - Generating embeddings for {len(chunks)} extracted chunks. ---")
-            texts = [chunk["content"] for chunk in chunks]
+            texts = []
+            for chunk in chunks:
+                # Combine content with questions for better semantic embedding
+                content_with_questions = chunk["content"]
+                if chunk.get("questions"):
+                    questions_text = " ".join(chunk["questions"])
+                    content_with_questions += f"\n\nRelated questions: {questions_text}"
+                texts.append(content_with_questions)
+
             if not texts:
                 logger.warning(f"--- RAGService: No text content found in chunks to generate embeddings for {file_path}. ---")
                 return False
@@ -61,13 +71,16 @@ class RAGService:
             source_filename = file_path.split('/')[-1] if '/' in file_path else file_path.split('\\')[-1] if '\\' in file_path else file_path
 
             for chunk in chunks:
-                if 'source' not in chunk or not chunk['source']: # Add filename as source if not present or empty
+                if 'source' not in chunk or not chunk['source']: # Adding filename as source if not present or empty
                     chunk['source'] = source_filename
-                # Ensure page is present, default to 1 if missing
+                # Ensuring page is present, default to 1 if missing
                 if 'page' not in chunk:
                     chunk['page'] = chunk.get("page", 1) # Default to 1 if 'page' key is missing
                 if 'type' not in chunk:
                     chunk['type'] = chunk.get("type", "block") # Default to 'block'
+                
+                # Store the original content (without questions) separately for display
+                chunk['original_content'] = chunk['content']
 
 
             add_success = self.vector_store.add_documents(chunks, embeddings)
@@ -134,11 +147,13 @@ class RAGService:
         try:
             context_parts = []
             for result in search_results:
-                context_parts.append(f"Content: {result['content']}")
+                # Use original content without questions for context display
+                content = result.get('original_content', result['content'])
+                context_parts.append(f"Content: {content}")
             return "\n\n".join(context_parts)
         except Exception as e:
             return ""
-    
+
     def _build_prompt(self, question: str, context: str, search_results: List[Dict], chat_history: List[Dict], language: str) -> str:
         try:
             # Build numbered context with source references
@@ -148,29 +163,36 @@ class RAGService:
                 page = result.get('metadata', {}).get('page', '')
                 page_ref = f", page {page}" if page else ""
                 
-                numbered_context.append(f"[{i}] {result['content']}\nSource: {source}{page_ref}")
+                # Use original content for display (without questions)
+                content = result.get('original_content', result['content'])
+                numbered_context.append(f"[{i}] {content}\nSource: {source}{page_ref}")
             
             context_with_sources = "\n\n".join(numbered_context)
             
-            if language == "spanish":
-                system_msg = """Eres un asistente especializado en leyes de inmigración. Responde basándote únicamente en el contexto proporcionado.
-    IMPORTANTE: Incluye citas en tu respuesta usando el formato [número] para referenciar las fuentes del contexto."""
-                prompt_template = f"{system_msg}\n\nContexto:\n{context_with_sources}\n\nPregunta: {question}\nRespuesta:"
-            else:
-                system_msg = """You are an immigration law specialist assistant. Answer based only on the provided context.
-    IMPORTANT: Include citations in your response using [number] format to reference the context sources."""
-                prompt_template = f"{system_msg}\n\nContext:\n{context_with_sources}\n\nQuestion: {question}\nAnswer:"
-            
-            # Add chat history if exists
+            # Format chat history
+            history_text = ""
             if chat_history:
-                history_text = self._format_chat_history(chat_history)
-                prompt_template = f"{prompt_template}\n\nChat History:\n{history_text}"
+                history_formatted = self._format_chat_history(chat_history)
+                history_text = f"Chat History:\n{history_formatted}\n\n"
             
-            return prompt_template
+            # Get prompts from centralized file
+            system_message = get_system_prompt(language)
+            template = get_prompt_template(language)
+            
+            # Build final prompt
+            final_prompt = template.format(
+                system_message=system_message,
+                context=context_with_sources,
+                chat_history=history_text,
+                question=question
+            )
+            
+            return final_prompt
+            
         except Exception as e:
             logger.error(f"Error building prompt: {str(e)}")
             return f"Context: {context}\nQuestion: {question}\nAnswer:"
-    
+            
     def _format_chat_history(self, chat_history: List[Dict]) -> str:
         try:
             history_parts = []
