@@ -4,7 +4,7 @@ from app.services.embeddings import EmbeddingService
 from app.services.vectorstore import VectorStoreService
 from app.services.data_loader import DocumentProcessor
 from app.core.config import CONTEXT_HISTORY_MESSAGES, GOOGLE_PROJECT_ID, GOOGLE_LOCATION, GOOGLE_PROCESSOR_ID, MAX_CHUNKS_RETRIEVED
-from app.core.prompts import get_system_prompt, get_prompt_template
+from app.core.prompts import get_system_prompt, get_prompt_template, LANGUAGE_DETECTION_PROMPT
 
 import re
 import logging
@@ -136,11 +136,22 @@ class RAGService:
     
     def _detect_language(self, text: str) -> str:
         try:
-            spanish_words = ['el', 'la', 'es', 'de', 'que', 'y', 'en', 'un', 'una', 'con', 'por', 'para']
-            words = re.findall(r'\b\w+\b', text.lower())
-            spanish_count = sum(1 for word in words if word in spanish_words)
-            return "spanish" if spanish_count > len(words) * 0.2 else "english"
-        except:
+            # Use simple heuristic for very short texts
+            if len(text.strip()) < 10:
+                spanish_words = ['el', 'la', 'es', 'de', 'que', 'y', 'en', 'un', 'una', 'con', 'por', 'para']
+                words = re.findall(r'\b\w+\b', text.lower())
+                spanish_count = sum(1 for word in words if word in spanish_words)
+                return "spanish" if spanish_count > len(words) * 0.2 else "english"
+            
+            # Use LLM for longer texts
+            prompt = LANGUAGE_DETECTION_PROMPT.format(text=text)
+            
+            response = self.llm_client.generate_response(prompt).strip().lower()
+            logger.info(f"The system detected {response} as the language from the query\n{50 * '-----'}")
+            return "spanish" if "spanish" in response else "english"
+            
+        except Exception as e:
+            logger.warning(f"Language detection failed: {str(e)}, defaulting to english")
             return "english"
     
     def _build_context(self, search_results: List[Dict]) -> str:

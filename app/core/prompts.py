@@ -67,6 +67,11 @@ PREGUNTAS POCO COMUNES:
 4. [pregunta]
 5. [pregunta]"""
 
+# Language detection prompt
+LANGUAGE_DETECTION_PROMPT = """Detect the language of this text. Respond with only "english" or "spanish".
+Text: {text}
+Language:"""
+
 def get_system_prompt(language: str) -> str:
     """Get system prompt based on language"""
     return IMMIGRATION_SYSTEM_PROMPT_ES if language == "spanish" else IMMIGRATION_SYSTEM_PROMPT_EN

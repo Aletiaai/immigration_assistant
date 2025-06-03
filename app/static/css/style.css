@@ -251,6 +251,156 @@ body {
     animation: spin 1s ease-in-out infinite;
 }
 
+/* Enhanced message formatting */
+.message.assistant .message-content p {
+    margin: 0 0 12px 0;
+    line-height: 1.6;
+}
+
+.message.assistant .message-content p:last-child {
+    margin-bottom: 0;
+}
+
+.message.assistant .message-content ul {
+    margin: 12px 0;
+    padding-left: 20px;
+}
+
+.message.assistant .message-content li {
+    margin: 6px 0;
+    line-height: 1.5;
+}
+
+.message.assistant .message-content strong {
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.message.assistant .message-content em {
+    font-style: italic;
+    color: #4a5568;
+}
+
+/* Better spacing for long responses */
+.message.assistant .message-content {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Improved readability */
+.message.assistant .message-content {
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Citation styling */
+.citation {
+    color: #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin: 0 2px;
+}
+
+.citation:hover {
+    background: rgba(49, 130, 206, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Citation popup */
+.citation-popup {
+    position: absolute;
+    z-index: 1000;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    max-width: 400px;
+    width: 90vw;
+    max-height: 300px;
+    border: 1px solid #e2e8f0;
+    animation: popupFadeIn 0.2s ease-out;
+}
+
+.citation-content {
+    padding: 20px;
+    position: relative;
+}
+
+.citation-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #718096;
+    padding: 5px;
+    line-height: 1;
+}
+
+.citation-close:hover {
+    color: #2d3748;
+}
+
+.citation-content h4 {
+    margin: 0 0 15px 0;
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding-right: 30px;
+}
+
+.citation-text {
+    color: #4a5568;
+    line-height: 1.6;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 10px;
+    font-size: 0.9rem;
+}
+
+/* Enhanced paragraph spacing */
+.message.assistant .message-content p {
+    margin: 0 0 16px 0;
+    line-height: 1.7;
+}
+
+.message.assistant .message-content p:last-child {
+    margin-bottom: 0;
+}
+
+@keyframes popupFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Custom scrollbar for citation popup */
+.citation-text::-webkit-scrollbar {
+    width: 4px;
+}
+
+.citation-text::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+
+.citation-text::-webkit-scrollbar-thumb {
+    background: rgba(113, 128, 150, 0.3);
+    border-radius: 10px;
+}
+
 @keyframes spin {
     to { transform: rotate(360deg); }
 }

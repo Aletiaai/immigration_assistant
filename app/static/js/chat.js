@@ -88,36 +88,113 @@ class ChatInterface {
             throw new Error(errorData.detail || `HTTP ${response.status}`);
         }
 
-        return await response.json();
+        const result = await response.json();
+        console.log('API Response:', result); // Debug line
+        return result;
     }
 
     addMessage(content, sender, sources = []) {
-        // Remove welcome message if it exists
-        const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            welcomeMessage.remove();
-        }
-
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
-
-        const messageContent = document.createElement('div');
-        messageContent.className = 'message-content';
-        messageContent.textContent = content;
-
-        messageDiv.appendChild(messageContent);
-
-        // Add sources if available (for assistant messages)
-        if (sender === 'assistant' && sources && sources.length > 0) {
-            const sourcesDiv = document.createElement('div');
-            sourcesDiv.className = 'message-sources';
-            sourcesDiv.innerHTML = `<strong>Sources:</strong> ${sources.length} document(s) referenced`;
-            messageDiv.appendChild(sourcesDiv);
-        }
-
-        this.chatMessages.appendChild(messageDiv);
-        this.scrollToBottom();
+    // Remove welcome message if it exists
+    const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
+    if (welcomeMessage) {
+        welcomeMessage.remove();
     }
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    
+    // Format the content for better readability
+    if (sender === 'assistant') {
+        messageContent.innerHTML = this.formatAssistantMessage(content);
+        // Store sources data for citation popups
+        messageDiv.setAttribute('data-sources', JSON.stringify(sources));
+        // Add click handlers for citations
+        this.addCitationHandlers(messageContent, sources);
+    } else {
+        messageContent.textContent = content;
+    }
+
+    messageDiv.appendChild(messageContent);
+
+    // Add sources if available (for assistant messages)
+    if (sender === 'assistant' && sources && sources.length > 0) {
+        const sourcesDiv = document.createElement('div');
+        sourcesDiv.className = 'message-sources';
+        sourcesDiv.innerHTML = `<strong>Sources:</strong> ${sources.length} document(s) referenced`;
+        messageDiv.appendChild(sourcesDiv);
+    }
+
+    this.chatMessages.appendChild(messageDiv);
+    this.scrollToBottom();
+}
+
+addCitationHandlers(messageContent, sources) {
+    const citations = messageContent.querySelectorAll('.citation');
+    citations.forEach(citation => {
+        citation.addEventListener('click', (e) => {
+            e.preventDefault();
+            const sourceIndex = parseInt(citation.getAttribute('data-source')) - 1;
+            if (sources && sources[sourceIndex]) {
+                this.showCitationPopup(sources[sourceIndex], citation);
+            }
+        });
+    });
+}
+
+showCitationPopup(source, citationElement) {
+    // Remove existing popup
+    const existingPopup = document.querySelector('.citation-popup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+
+    // Create popup
+    const popup = document.createElement('div');
+    popup.className = 'citation-popup';
+    popup.innerHTML = `
+        <div class="citation-content">
+            <button class="citation-close">&times;</button>
+            <h4>${source.header || 'Source Reference'}</h4>
+            <div class="citation-text">${source.original_content || source.content || source.text || 'Source content not available'}</div>
+        </div>
+    `;
+
+    document.body.appendChild(popup);
+
+    // Position popup near citation
+    const rect = citationElement.getBoundingClientRect();
+    popup.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+    popup.style.left = Math.max(10, rect.left + window.scrollX - 150) + 'px';
+
+    // Close handlers
+    popup.querySelector('.citation-close').addEventListener('click', () => popup.remove());
+    popup.addEventListener('click', (e) => {
+        if (e.target === popup) popup.remove();
+    });
+}
+
+formatAssistantMessage(content) {
+    // Replace citation patterns [1], [2], etc. with clickable spans
+    let formattedContent = content.replace(/\[(\d+)\]/g, '<span class="citation" data-source="$1">[$1]</span>');
+    
+    // Split on single line breaks and filter empty lines
+    const paragraphs = formattedContent.split('\n').filter(p => p.trim());
+    
+    return paragraphs.map(paragraph => {
+        paragraph = paragraph.trim();
+        
+        // Handle bold text (**text**)
+        paragraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Return as paragraph with proper spacing
+        return `<p>${paragraph}</p>`;
+    }).join('');
+}
+
+
 
     scrollToBottom() {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
