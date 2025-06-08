@@ -13,6 +13,7 @@ class ChatInterface {
         this.sendBtn = document.getElementById('send-btn');
         this.clearBtn = document.getElementById('clear-chat');
         this.statusElement = document.getElementById('status');
+        this.adminBtn = document.getElementById('admin-btn');
     }
 
     attachEventListeners() {
@@ -21,6 +22,11 @@ class ChatInterface {
         
         // Clear chat button
         this.clearBtn.addEventListener('click', () => this.clearChat());
+
+        // Admin button click
+        this.adminBtn.addEventListener('click', () => {
+            window.location.href = '/login';
+        });
         
         // Enter key handling
         this.messageInput.addEventListener('keydown', (e) => {

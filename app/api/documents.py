@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, status
 from typing import List
 from datetime import datetime
 import os
@@ -7,6 +7,7 @@ from app.models.documents import DocumentUpload
 from app.services.rag_service import RAGService
 from app.core.config import DATA_DIR
 from app.core.dependencies import get_rag_service
+from app.core.auth import get_current_admin
 import logging
 
 router = APIRouter()
@@ -17,7 +18,7 @@ RAW_DATA_DIR = DATA_DIR / "raw"
 RAW_DATA_DIR.mkdir(exist_ok=True)
 
 @router.post("/documents/upload", response_model=DocumentUpload)
-async def upload_document(file: UploadFile = File(...), service: RAGService = Depends(get_rag_service)):
+async def upload_document(file: UploadFile = File(...), service: RAGService = Depends(get_rag_service), admin: str = Depends(get_current_admin)):
     logger.info(f"--- ENTERING API: /documents/upload for file: {file.filename if file else 'No file object'} ---")
 
     if not service: # Explicitly check if service is None
@@ -100,7 +101,7 @@ async def list_documents():
         raise HTTPException(status_code=500, detail=f"Failed to list documents: {str(e)}")
 
 @router.delete("/documents/{filename}")
-async def delete_document(filename: str):
+async def delete_document(filename: str, admin: str = Depends(get_current_admin)):
     try:
         file_path = RAW_DATA_DIR / filename
         
@@ -124,7 +125,7 @@ async def delete_document(filename: str):
         raise HTTPException(status_code=500, detail=f"Failed to delete document: {str(e)}")
 
 @router.get("/documents/status")
-async def get_vectorstore_status(service: RAGService = Depends(get_rag_service)):
+async def get_vectorstore_status(service: RAGService = Depends(get_rag_service), admin: str = Depends(get_current_admin)):
     try:
         count = service.vector_store.get_collection_count()
         

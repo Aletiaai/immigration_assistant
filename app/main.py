@@ -1,13 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException, Depends, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pathlib import Path
 import uvicorn
 import logging
+from datetime import datetime
 from app.api import chat, documents
 from app.core.config import API_TITLE, API_VERSION, DESRIPTION, HOST, PORT
-from app.api import chat, documents
+from app.api import chat, documents, auth 
+
+router = APIRouter()
 
 # Configure basic logging
 logging.basicConfig(
@@ -39,6 +42,8 @@ app.add_middleware(
 # Include API routers
 app.include_router(chat.router, prefix="/api", tags=["chat"])
 app.include_router(documents.router, prefix="/api", tags=["documents"])
+app.include_router(auth.router, prefix="/api", tags=["auth"])
+
 
 # Mount static files
 static_path = Path(__file__).parent / "static"
@@ -88,6 +93,21 @@ async def health_check():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    """Serve the admin login page"""
+    try:
+        html_file = Path(__file__).parent / "static" / "login.html"
+        if html_file.exists():
+            return HTMLResponse(content=html_file.read_text(), status_code=200)
+        else:
+            return HTMLResponse(
+                content="<h1>Login Page</h1><p>Login page not found.</p>",
+                status_code=404
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to serve login page: {str(e)}")
 
 if __name__ == "__main__":
     try:

@@ -1,6 +1,8 @@
 from pathlib import Path
 from dotenv import load_dotenv
 import os
+import secrets
+import hashlib
 load_dotenv()
 
 # Project paths
@@ -51,3 +53,13 @@ CONTEXT_HISTORY_MESSAGES = 5
 
 # Chunk settings
 MAX_CHUNKS_RETRIEVED = 3
+
+# auth configuration 
+SECRET_KEY = secrets.token_urlsafe(32)  # Generate secure key
+ADMIN_PASSWORD_HASH = hashlib.sha256("admin123".encode()).hexdigest()
+TOKEN_EXPIRE_HOURS = 8
+
+# Admin Authentication
+ADMIN_PASSWORD = "your_secure_password_here"  # Change this!
+JWT_SECRET_KEY = "your-secret-key-here"  # Change this!
+JWT_EXPIRE_HOURS = 8

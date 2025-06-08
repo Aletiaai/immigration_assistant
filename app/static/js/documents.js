@@ -1,5 +1,38 @@
 // Script for app/static/js/documents.js
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('admin_token');
+
+    // Redirect to login if no token is found
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        // Verify token with the backend
+        const response = await fetch('/api/auth/verify', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            localStorage.removeItem('admin_token');
+            window.location.href = '/login';
+            return;
+        }
+
+        // Token is valid; initialize document management
+        initializeDocumentManagement();
+    } catch (error) {
+        console.error('Authentication check failed:', error);
+        localStorage.removeItem('admin_token');
+        window.location.href = '/login';
+    }
+});
+
+function initializeDocumentManagement() {
     const fileInput = document.getElementById('file-input');
     const uploadBtn = document.getElementById('upload-btn');
     const uploadStatusEl = document.getElementById('upload-status');
@@ -19,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showStatusMessage(element, message, type = 'info') {
         if (!element) return;
         element.textContent = message;
-        element.className = `status-message ${type}`; // Applies .success, .error, or .info
+        element.className = `status-message ${type}`;
         element.style.display = 'block';
     }
 
@@ -40,12 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
             button.dataset.originalText = button.textContent;
         }
     }
-    
-    // Add a smaller spinner style if not already in main CSS
+
     const styleSheet = document.createElement("style");
     styleSheet.innerText = `.spinner-small { border: 2px solid rgba(0,0,0,0.1); width: 16px; height: 16px; border-radius: 50%; border-left-color: #667eea; animation: spin 0.8s ease infinite; display: inline-block; vertical-align: middle; margin-right: 5px; }`;
     document.head.appendChild(styleSheet);
-
 
     // --- Document Upload ---
     async function uploadDocument() {
@@ -70,15 +101,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE_URL}/upload`, {
                 method: 'POST',
                 body: formData,
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                }
             });
+
+            if (response.status === 401) {
+                localStorage.removeItem('admin_token');
+                window.location.href = '/login';
+                return;
+            }
 
             const result = await response.json();
 
             if (response.ok && result.status === 'processed') {
                 showStatusMessage(uploadStatusEl, `Success: ${result.message || 'Document uploaded and processed.'}`, 'success');
-                fileInput.value = ''; // Clear file input
-                fetchDocumentList(); // Refresh list
-                fetchKbStatus(); // Refresh KB status
+                fileInput.value = '';
+                fetchDocumentList();
+                fetchKbStatus();
             } else {
                 showStatusMessage(uploadStatusEl, `Error: ${result.message || 'Upload failed.'} (Status: ${result.status})`, 'error');
             }
@@ -95,10 +135,21 @@ document.addEventListener('DOMContentLoaded', () => {
         setLoading(refreshDocsBtn, true);
         listStatusEl.textContent = 'Loading documents...';
         listStatusEl.className = 'status-message info';
-        documentListEl.innerHTML = ''; // Clear current list
+        documentListEl.innerHTML = '';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/list`);
+            const response = await fetch(`${API_BASE_URL}/list`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                }
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem('admin_token');
+                window.location.href = '/login';
+                return;
+            }
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -145,18 +196,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteDocument(filename, buttonElement) {
         setLoading(buttonElement, true);
-        clearStatusMessage(listStatusEl); // Clear general list status before specific op
+        clearStatusMessage(listStatusEl);
 
         try {
             const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(filename)}`, {
                 method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                }
             });
+
+            if (response.status === 401) {
+                localStorage.removeItem('admin_token');
+                window.location.href = '/login';
+                return;
+            }
+
             const result = await response.json();
 
             if (response.ok) {
                 showStatusMessage(listStatusEl, `"${filename}" deleted successfully.`, 'success');
-                fetchDocumentList(); // Refresh the list
-                fetchKbStatus();   // Refresh KB status as deletion might affect it
+                fetchDocumentList();
+                fetchKbStatus();
             } else {
                 showStatusMessage(listStatusEl, `Error deleting "${filename}": ${result.detail || 'Unknown error'}`, 'error');
             }
@@ -164,11 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Delete error:', error);
             showStatusMessage(listStatusEl, `Network or server error during deletion: ${error.message}`, 'error');
         } finally {
-           // setLoading(buttonElement, false); // This is tricky because the button is removed on refresh
-           // No need to reset loading state here as the list will refresh and button will be gone or re-rendered.
+            // No need to reset loading state here as the list will refresh
         }
     }
-
 
     // --- Knowledge Base Status ---
     async function fetchKbStatus() {
@@ -178,7 +237,18 @@ document.addEventListener('DOMContentLoaded', () => {
         kbReadyStatusEl.textContent = 'Loading...';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/status`);
+            const response = await fetch(`${API_BASE_URL}/status`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                }
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem('admin_token');
+                window.location.href = '/login';
+                return;
+            }
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -194,7 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 kbReadyStatusEl.style.color = 'red';
             }
             showStatusMessage(kbStatusMessageEl, `Status as of ${new Date(data.timestamp).toLocaleString()}`, 'info');
-
         } catch (error) {
             console.error('Error fetching KB status:', error);
             kbChunksEl.textContent = 'Error';
@@ -213,4 +282,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initial Load ---
     fetchDocumentList();
     fetchKbStatus();
-});
+}
