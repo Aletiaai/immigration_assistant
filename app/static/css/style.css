@@ -410,6 +410,47 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Drop zone styling */
+.drop-zone {
+    padding: 15px;
+    border: 2px dashed #e2e8f0;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.95);
+    transition: all 0.3s ease;
+}
+
+.drop-zone.dragover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
+}
+
+/* File input container styling */
+.file-input-container {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.file-input-container .btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+}
+
+.file-input-container span#file-name {
+    color: #718096;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* Document info styling for messages */
+.document-info {
+    font-size: 0.85rem;
+    color: #718096;
+    margin-top: 8px;
+    font-style: italic;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .container {
@@ -450,6 +491,12 @@ body {
     
     #message-input {
         width: 100%;
+    }
+    
+    .file-input-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
 }
 

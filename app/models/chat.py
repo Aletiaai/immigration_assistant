@@ -23,3 +23,17 @@ class DocumentUpload(BaseModel):
     status: str
     message: Optional[str] = None
     timestamp: datetime
+
+class DocumentUploadMessage(BaseModel):
+    message: str
+    document_file: str  # filename
+    instructions: Optional[str] = None
+    timestamp: Optional[datetime] = None
+
+class DocumentProcessingResponse(BaseModel):
+    response: str
+    document_filename: str
+    processing_status: str
+    sources: List[Dict[str, Any]] = []
+    language: str
+    timestamp: datetime

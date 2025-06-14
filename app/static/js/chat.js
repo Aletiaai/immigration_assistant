@@ -2,6 +2,7 @@ class ChatInterface {
     constructor() {
         this.sessionId = 'default';
         this.isLoading = false;
+        this.attachedFile = null;
         this.initializeElements();
         this.attachEventListeners();
         this.updateStatus();
@@ -14,39 +15,66 @@ class ChatInterface {
         this.clearBtn = document.getElementById('clear-chat');
         this.statusElement = document.getElementById('status');
         this.adminBtn = document.getElementById('admin-btn');
+        this.dropZone = document.getElementById('drop-zone');
+        this.attachFileBtn = document.getElementById('attach-file-btn');
+        this.fileInput = document.getElementById('file-input');
+        this.fileNameSpan = document.getElementById('file-name');
     }
 
     attachEventListeners() {
-        // Send button click
         this.sendBtn.addEventListener('click', () => this.sendMessage());
-        
-        // Clear chat button
         this.clearBtn.addEventListener('click', () => this.clearChat());
-
-        // Admin button click
         this.adminBtn.addEventListener('click', () => {
             window.location.href = '/login';
         });
-        
-        // Enter key handling
         this.messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 if (e.shiftKey) {
-                    // Allow new line with Shift+Enter
                     return;
                 } else {
-                    // Send message with Enter
                     e.preventDefault();
                     this.sendMessage();
                 }
             }
         });
-
-        // Auto-resize textarea
         this.messageInput.addEventListener('input', () => {
             this.messageInput.style.height = 'auto';
             this.messageInput.style.height = this.messageInput.scrollHeight + 'px';
         });
+        this.dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            this.dropZone.classList.add('dragover');
+        });
+        this.dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            this.dropZone.classList.remove('dragover');
+        });
+        this.dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                this.handleFile(files[0]);
+            }
+        });
+        this.attachFileBtn.addEventListener('click', () => {
+            this.fileInput.click();
+        });
+        this.fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                this.handleFile(e.target.files[0]);
+            }
+        });
+    }
+
+    handleFile(file) {
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endswith('.docx')) {
+            this.attachedFile = file;
+            this.fileNameSpan.textContent = `Attached: ${file.name}`;
+        } else {
+            alert('Only PDF and DOCX files are supported.');
+            this.fileInput.value = '';
+        }
     }
 
     async sendMessage() {
@@ -58,15 +86,55 @@ class ChatInterface {
 
         try {
             this.setLoading(true);
-            this.addMessage(message, 'user');
+            this.addMessage(message, 'user', [], this.attachedFile ? this.attachedFile.name : null);
             this.messageInput.value = '';
             this.messageInput.style.height = 'auto';
+            this.fileNameSpan.textContent = '';
+            this.fileInput.value = '';
 
-            const response = await this.callChatAPI(message);
-            this.addMessage(response.response, 'assistant', response.sources);
+            let result;
+            if (this.attachedFile) {
+                const formData = new FormData();
+                formData.append('file', this.attachedFile);
+                formData.append('message', message);
+                formData.append('session_id', this.sessionId);
+                formData.append('instructions', '');
+                const response = await fetch('/api/chat/document', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch {
+                        errorData = { detail: 'Failed to parse error response' };
+                    }
+                    console.error('API Error Response:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        errorData,
+                        responseText: await response.text()
+                    });
+                    throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+                }
+                result = await response.json();
+                console.log('Parsed API Response (Document):', result);
+            } else {
+                result = await this.callChatAPI(message);
+                console.log('Parsed API Response (Text):', result);
+            }
+
+            // Validate response structure
+            if (!result.response || !Array.isArray(result.sources) || !result.language || !result.timestamp) {
+                console.error('Invalid Response Structure:', result);
+                throw new Error('Invalid response structure from API');
+            }
+
+            this.addMessage(result.response, 'assistant', result.sources, this.attachedFile ? result.document_filename : null);
 
         } catch (error) {
-            console.error('Chat error:', error);
+            console.error('Chat error:', error.message, error.stack);
             this.addMessage(
                 'Sorry, there was an error processing your message. Please try again.',
                 'assistant'
@@ -74,133 +142,150 @@ class ChatInterface {
             this.updateStatus('Error', 'error');
         } finally {
             this.setLoading(false);
+            this.attachedFile = null;
         }
     }
 
     async callChatAPI(message) {
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        try {
+            const requestBody = {
                 message: message,
+                session_id: this.sessionId,
                 timestamp: new Date().toISOString()
-            })
-        });
+            };
+            console.log('Sending Request:', requestBody);
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.detail || `HTTP ${response.status}`);
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch {
+                    errorData = { detail: 'Failed to parse error response' };
+                }
+                console.error('API Error Response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorData,
+                    responseText: await response.text()
+                });
+                throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            let result;
+            try {
+                result = await response.json();
+                console.log('Parsed API Response:', result);
+            } catch (e) {
+                console.error('Fetch Response Parsing Error:', e, 'Raw Response:', await response.text());
+                throw new Error('Failed to parse API response JSON');
+            }
+
+            return result;
+        } catch (error) {
+            console.error('Fetch error in callChatAPI:', error.message, error.stack);
+            throw error;
+        }
+    }
+
+    addMessage(content, sender, sources = [], documentFilename = null) {
+        const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
+        if (welcomeMessage) {
+            welcomeMessage.remove();
         }
 
-        const result = await response.json();
-        console.log('API Response:', result); // Debug line
-        return result;
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message-content';
+        
+        if (sender === 'assistant') {
+            messageContent.innerHTML = this.formatAssistantMessage(content);
+            messageDiv.setAttribute('data-sources', JSON.stringify(sources));
+            this.addCitationHandlers(messageContent, sources);
+        } else {
+            messageContent.textContent = content;
+        }
+
+        messageDiv.appendChild(messageContent);
+
+        if (documentFilename) {
+            const docInfo = document.createElement('div');
+            docInfo.className = 'document-info';
+            docInfo.textContent = `Based on: ${documentFilename}`;
+            messageDiv.appendChild(docInfo);
+        }
+
+        if (sender === 'assistant' && sources && sources.length > 0) {
+            const sourcesDiv = document.createElement('div');
+            sourcesDiv.className = 'message-sources';
+            sourcesDiv.innerHTML = `<strong>Sources:</strong> ${sources.length} document(s) referenced`;
+            messageDiv.appendChild(sourcesDiv);
+        }
+
+        this.chatMessages.appendChild(messageDiv);
+        this.scrollToBottom();
     }
 
-    addMessage(content, sender, sources = []) {
-    // Remove welcome message if it exists
-    const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
-    if (welcomeMessage) {
-        welcomeMessage.remove();
-    }
-
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${sender}`;
-
-    const messageContent = document.createElement('div');
-    messageContent.className = 'message-content';
-    
-    // Format the content for better readability
-    if (sender === 'assistant') {
-        messageContent.innerHTML = this.formatAssistantMessage(content);
-        // Store sources data for citation popups
-        messageDiv.setAttribute('data-sources', JSON.stringify(sources));
-        // Add click handlers for citations
-        this.addCitationHandlers(messageContent, sources);
-    } else {
-        messageContent.textContent = content;
-    }
-
-    messageDiv.appendChild(messageContent);
-
-    // Add sources if available (for assistant messages)
-    if (sender === 'assistant' && sources && sources.length > 0) {
-        const sourcesDiv = document.createElement('div');
-        sourcesDiv.className = 'message-sources';
-        sourcesDiv.innerHTML = `<strong>Sources:</strong> ${sources.length} document(s) referenced`;
-        messageDiv.appendChild(sourcesDiv);
-    }
-
-    this.chatMessages.appendChild(messageDiv);
-    this.scrollToBottom();
-}
-
-addCitationHandlers(messageContent, sources) {
-    const citations = messageContent.querySelectorAll('.citation');
-    citations.forEach(citation => {
-        citation.addEventListener('click', (e) => {
-            e.preventDefault();
-            const sourceIndex = parseInt(citation.getAttribute('data-source')) - 1;
-            if (sources && sources[sourceIndex]) {
-                this.showCitationPopup(sources[sourceIndex], citation);
-            }
+    addCitationHandlers(messageContent, sources) {
+        const citations = messageContent.querySelectorAll('.citation');
+        citations.forEach(citation => {
+            citation.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sourceIndex = parseInt(citation.getAttribute('data-source')) - 1;
+                if (sources && sources[sourceIndex]) {
+                    this.showCitationPopup(sources[sourceIndex], citation);
+                }
+            });
         });
-    });
-}
-
-showCitationPopup(source, citationElement) {
-    // Remove existing popup
-    const existingPopup = document.querySelector('.citation-popup');
-    if (existingPopup) {
-        existingPopup.remove();
     }
 
-    // Create popup
-    const popup = document.createElement('div');
-    popup.className = 'citation-popup';
-    popup.innerHTML = `
-        <div class="citation-content">
-            <button class="citation-close">&times;</button>
-            <h4>${source.header || 'Source Reference'}</h4>
-            <div class="citation-text">${source.original_content || source.content || source.text || 'Source content not available'}</div>
-        </div>
-    `;
+    showCitationPopup(source, citationElement) {
+        const existingPopup = document.querySelector('.citation-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
 
-    document.body.appendChild(popup);
+        const popup = document.createElement('div');
+        popup.className = 'citation-popup';
+        popup.innerHTML = `
+            <div class="citation-content">
+                <button class="citation-close">×</button>
+                <h4>${source.header || 'Source Reference'}</h4>
+                <div class="citation-text">${source.original_content || source.content || source.text || 'Source content not available'}</div>
+            </div>
+        `;
 
-    // Position popup near citation
-    const rect = citationElement.getBoundingClientRect();
-    popup.style.top = (rect.bottom + window.scrollY + 10) + 'px';
-    popup.style.left = Math.max(10, rect.left + window.scrollX - 150) + 'px';
+        document.body.appendChild(popup);
 
-    // Close handlers
-    popup.querySelector('.citation-close').addEventListener('click', () => popup.remove());
-    popup.addEventListener('click', (e) => {
-        if (e.target === popup) popup.remove();
-    });
-}
+        const rect = citationElement.getBoundingClientRect();
+        popup.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+        popup.style.left = Math.max(10, rect.left + window.scrollX - 150) + 'px';
 
-formatAssistantMessage(content) {
-    // Replace citation patterns [1], [2], etc. with clickable spans
-    let formattedContent = content.replace(/\[(\d+)\]/g, '<span class="citation" data-source="$1">[$1]</span>');
-    
-    // Split on single line breaks and filter empty lines
-    const paragraphs = formattedContent.split('\n').filter(p => p.trim());
-    
-    return paragraphs.map(paragraph => {
-        paragraph = paragraph.trim();
+        popup.querySelector('.citation-close').addEventListener('click', () => popup.remove());
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) popup.remove();
+        });
+    }
+
+    formatAssistantMessage(content) {
+        let formattedContent = content.replace(/\[(\d+)\]/g, '<span class="citation" data-source="$1">[$1]</span>');
+        const paragraphs = formattedContent.split('\n').filter(p => p.trim());
         
-        // Handle bold text (**text**)
-        paragraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Return as paragraph with proper spacing
-        return `<p>${paragraph}</p>`;
-    }).join('');
-}
-
-
+        return paragraphs.map(paragraph => {
+            paragraph = paragraph.trim();
+            paragraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            return `<p>${paragraph}</p>`;
+        }).join('');
+    }
 
     scrollToBottom() {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
@@ -222,11 +307,8 @@ formatAssistantMessage(content) {
 
     updateStatus(text = 'Ready', type = 'ready') {
         this.statusElement.textContent = text;
-        
-        // Remove existing status classes
         this.statusElement.className = '';
         
-        // Add appropriate status class
         switch (type) {
             case 'ready':
                 this.statusElement.style.background = '#48bb78';
@@ -249,7 +331,6 @@ formatAssistantMessage(content) {
             });
 
             if (response.ok) {
-                // Clear chat messages
                 this.chatMessages.innerHTML = `
                     <div class="welcome-message">
                         <h2>Immigration Law Assistant</h2>
@@ -290,13 +371,8 @@ formatAssistantMessage(content) {
     }
 }
 
-// Initialize chat interface when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     const chat = new ChatInterface();
-    
-    // Check system health on startup
     chat.checkSystemHealth();
-    
-    // Focus on input field
     chat.messageInput.focus();
 });

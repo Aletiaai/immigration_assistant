@@ -1,6 +1,7 @@
 from google.cloud import documentai_v1 as documentai
 from google.cloud.documentai_v1.types import Document
 from typing import List, Dict
+from docx import Document as DocxDocument
 from app.core.config import (
     GOOGLE_PROJECT_ID, GOOGLE_LOCATION, GOOGLE_PROCESSOR_ID,
     MIN_SECTION_TEXT_LENGTH, DEFAULT_HEADER_TEXT, CHUNK_SIZE, CHUNK_OVERLAP,
@@ -13,6 +14,10 @@ from app.core.prompts import get_question_generation_prompt
 import logging
 import re
 import os
+from PyPDF2 import PdfReader
+from docx import Document
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +205,7 @@ class DocumentProcessor:
         logger.debug(f"--- DocumentProcessor: Starting _extract_chunks_from_layout_parser for {document_name}. ---")
         all_chunks = []
         
-        doc_layout: 'Document.DocumentLayout' = document_proto_obj.document_layout # Type hint
+        doc_layout: 'Document.DocumentLayout' = document_proto_obj.document_layout  # Type hint
         if not doc_layout or not doc_layout.blocks:
             logger.warning("--- DocumentProcessor: No document_layout or blocks found in Document AI response. ---")
             return all_chunks
@@ -209,11 +214,12 @@ class DocumentProcessor:
         current_section_content_parts = []
         current_section_page_start = 1
 
-        for block_data in doc_layout.blocks: # block_data is Document.Layout.Block
-            text_block: 'Document.Layout.TextBlock' = block_data.text_block # Type hint
+        for block_data in doc_layout.blocks:  # block_data is Document.Layout.Block
+            text_block: 'Document.Layout.TextBlock' = block_data.text_block  # Type hint
             block_type = text_block.type
             block_text_header_only = text_block.text.strip() if text_block.text else ""
-            page_start = block_data.page_span.page_start if hasattr(block_data, 'page_span') and block_data.page_span else 1
+            # Get page number from pageSpan
+            page_start = block_data.page_span.page_start if hasattr(block_data, 'page_span') and block_data.page_span and block_data.page_span.page_start else 1
 
             if not block_text_header_only and not (hasattr(text_block, 'blocks') and text_block.blocks):
                 continue
@@ -235,23 +241,23 @@ class DocumentProcessor:
                     section_text_str = "\n".join(current_section_content_parts).strip()
                     if section_text_str:
                         processed_chunks = self._process_section_into_chunks(
-                            current_header_text, section_text_str, current_section_page_start, 
-                            document_name, all_chunks 
+                            current_header_text, section_text_str, current_section_page_start,
+                            document_name, all_chunks
                         )
                         all_chunks.extend(processed_chunks)
                 
                 current_header_text = block_text_header_only
-                current_section_content_parts = [block_text_header_only] 
+                current_section_content_parts = [block_text_header_only]
                 current_section_page_start = page_start
                 logger.debug(f"--- DocumentProcessor: New header found: '{current_header_text}', page: {page_start}. ---")
 
                 if hasattr(text_block, 'blocks') and text_block.blocks:
-                    nested_text = self._get_text_from_nested_blocks(text_block.blocks) 
+                    nested_text = self._get_text_from_nested_blocks(text_block.blocks)
                     if nested_text:
                         current_section_content_parts.append(nested_text)
                         logger.debug(f"--- DocumentProcessor: Appended nested block text to header '{current_header_text}'. ---")
             
-            else: 
+            else:
                 if block_text_header_only:
                     if not current_section_content_parts:
                         current_section_page_start = page_start
@@ -262,7 +268,7 @@ class DocumentProcessor:
                     nested_text = self._get_text_from_nested_blocks(text_block.blocks)
                     if nested_text:
                         if not current_section_content_parts:
-                             current_section_page_start = page_start
+                            current_section_page_start = page_start
                         current_section_content_parts.append(nested_text)
                         logger.debug(f"--- DocumentProcessor: Appended nested block text to non-header section '{current_header_text}'. ---")
         
@@ -270,7 +276,7 @@ class DocumentProcessor:
             section_text_str = "\n".join(current_section_content_parts).strip()
             if section_text_str:
                 processed_chunks = self._process_section_into_chunks(
-                    current_header_text, section_text_str, current_section_page_start, 
+                    current_header_text, section_text_str, current_section_page_start,
                     document_name, all_chunks
                 )
                 all_chunks.extend(processed_chunks)
@@ -368,3 +374,48 @@ class DocumentProcessor:
         except Exception as e:
             logger.error(f"--- DocumentProcessor: Error in _get_text_from_layout: {str(e)} ---", exc_info=True)
             raise Exception(f"Text extraction from layout failed: {str(e)}")
+
+    def extract_text_from_docx(self, file_path: str) -> str:
+        """Extracts full text from a DOCX file using python-docx."""
+        logger.info(f"--- DocProcessor: Starting extract_text_from_docx for: {file_path} ---")
+        if Document is None:
+            raise ImportError("python-docx is not available. Cannot extract text from DOCX.")
+
+        try:
+            doc = Document(file_path)
+            full_text = [paragraph.text for paragraph in doc.paragraphs]
+            tables_text = []
+            for table in doc.tables:
+                for row in table.rows:
+                    row_cells_text = [cell.text for cell in row.cells]
+                    tables_text.append("\t".join(row_cells_text)) # Join cells by tab for table readability
+            
+            # Combine paragraph and table text
+            extracted_content = "\n".join(full_text + tables_text)
+            logger.info(f"--- DocProcessor: Extracted {len(extracted_content)} characters from DOCX: {file_path} ---")
+            return extracted_content
+
+        except Exception as e:
+            logger.error(f"--- DocProcessor: Error extracting text from DOCX {file_path}: {str(e)} ---", exc_info=True)
+            raise Exception(f"DOCX text extraction failed: {str(e)}")
+        
+    def extract_text_from_pdf(self, file_path: str) -> str:
+        """Extracts full text from a PDF file using PyPDF2."""
+        logger.info(f"--- DocProcessor: Starting extract_text_from_pdf for: {file_path} ---")
+        if PdfReader is None:
+            raise ImportError("PyPDF2 is not available. Cannot extract text from PDF.")
+
+        try:
+            full_text = []
+            with open(file_path, "rb") as file:
+                reader = PdfReader(file)
+                for page in reader.pages:
+                    full_text.append(page.extract_text() or "") # .extract_text() can return None
+            
+            extracted_content = "\n".join(full_text)
+            logger.info(f"--- DocProcessor: Extracted {len(extracted_content)} characters from PDF: {file_path} ---")
+            return extracted_content
+
+        except Exception as e:
+            logger.error(f"--- DocProcessor: Error extracting text from PDF {file_path}: {str(e)} ---", exc_info=True)
+            raise Exception(f"PDF text extraction failed: {str(e)}")

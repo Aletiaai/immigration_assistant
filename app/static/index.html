@@ -6,7 +6,6 @@
     <title>Immigration RAG Chat</title>
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/style.css">
-</div>
 </head>
 <body>
     <div class="container">
@@ -38,12 +37,19 @@
                 </div>
                 
                 <div class="chat-input-container">
-                    <div class="input-group">
-                        <textarea id="message-input" placeholder="Ask your question about immigration..." rows="2" maxlength="1000"></textarea>
-                        <button id="send-btn" class="btn btn-primary">Send</button>
-                    </div>
-                    <div class="input-info">
-                        <small>Press Shift+Enter for new line, Enter to send</small>
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="input-group">
+                            <textarea id="message-input" placeholder="Ask your question about immigration... Drop PDF or DOCX files here" rows="2" maxlength="1000"></textarea>
+                            <button id="send-btn" class="btn btn-primary">Send</button>
+                        </div>
+                        <div class="file-input-container">
+                            <input type="file" id="file-input" accept=".pdf,.docx" style="display: none;">
+                            <button id="attach-file-btn" class="btn btn-secondary">Attach File</button>
+                            <span id="file-name"></span>
+                        </div>
+                        <div class="input-info">
+                            <small>Press Shift+Enter for new line, Enter to send. Drop PDF or DOCX files here.</small>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,13 +1,15 @@
-from typing import List, Dict, Optional
+from typing import Any, List, Dict, Optional
 from app.services.llm_client import OllamaClient
 from app.services.embeddings import EmbeddingService
 from app.services.vectorstore import VectorStoreService
 from app.services.data_loader import DocumentProcessor
 from app.core.config import CONTEXT_HISTORY_MESSAGES, GOOGLE_PROJECT_ID, GOOGLE_LOCATION, GOOGLE_PROCESSOR_ID, MAX_CHUNKS_RETRIEVED
-from app.core.prompts import get_system_prompt, get_prompt_template, LANGUAGE_DETECTION_PROMPT
+from app.core.prompts import get_system_prompt, get_prompt_template, LANGUAGE_DETECTION_PROMPT, get_document_processing_prompt
 
 import re
 import logging
+
+import numpy as np
 
 logger = logging.getLogger(__name__) 
 
@@ -213,3 +215,47 @@ class RAGService:
             return "\n".join(history_parts)
         except Exception as e:
             return ""
+        
+    def process_document_temporarily(self, file_path: str, original_filename: str, user_message: str, instructions: str = "") -> Dict[str, Any]:
+        """Process document temporarily for one-time use without adding to knowledge base"""
+        try:
+            logger.info(f"--- RAGService: Processing document temporarily: {file_path} ---")
+
+            # Process document based on file type
+            if original_filename.lower().endswith('.pdf'):
+                full_text = self.doc_processor.extract_text_from_pdf(file_path)
+                logger.debug(f"Este es el contenido del archivo PDF: {full_text}")
+            elif original_filename.lower().endswith('.docx'):
+                full_text = self.doc_processor.extract_text_from_docx(file_path)
+            else:
+                raise ValueError("Unsupported file type")
+
+            if not full_text:
+                raise Exception("No content extracted from document")
+            
+            # Create special prompt for document processing
+            context = full_text
+
+            # Detect language and get appropriate prompt
+            language = self._detect_language(user_message)
+
+            prompt = get_document_processing_prompt(language)
+    
+            prompt_tamplate = prompt.format(
+                context = context,
+                user_message = user_message,
+                instructions = instructions if instructions else "None provided"
+            )
+
+            # Generate response
+            response = self.llm_client.generate_response(prompt_tamplate)
+            
+            return {
+            "response": response,
+            "sources": [{"content": full_text[:200] + "...", "page": "N/A"}],
+            "language": language
+        }
+            
+        except Exception as e:
+            logger.error(f"--- RAGService: Error in temporary document processing: {str(e)} ---")
+            raise Exception(f"Temporary document processing failed: {str(e)}")
