@@ -246,6 +246,32 @@ Provide a clear, accurate, and well-structured response. If the information is n
 
 RESPONSE:"""
 
+
+QUERY_INTENT_PROMPT = """
+You are an **expert document analysis specialist** with a keen eye for detail and the ability to discern the scope of information needed to answer a query. Your task is to analyze a "User Question" and determine if it requires a comprehensive understanding of an entire document or if it can be answered by focusing on a small, specific section.
+
+**Guidelines for Analysis:**
+- If the question seeks a **summary, main points, a rewrite, the overall theme, purpose, or structure** of the document or something similar, categorize it as requiring the **entire document**.
+- If the question asks for a **specific detail, fact, name, date, or a targeted definition** or something similar, categorize it as answerable from a **small, targeted part** of the document.
+
+User Question: "{question}"
+
+Based on your expert analysis of the user's question, respond with ONLY ONE of the following two words: **HOLISTIC** or **SPECIFIC**.
+"""
+
+TOPIC_CHANGE_PROMPT = """
+You are an **expert linguistic analyst** specializing in conversational flow. Your task is to accurately determine if a "New Question" is a direct follow-up to, or related to, the "Previous Conversation," or if it introduces a completely new and unrelated topic.
+
+Previous Conversation:
+---
+{chat_history}
+---
+
+New Question: "{question}"
+
+Based on your analysis, is the "New Question" a follow-up question about the "Previous Conversation"? Respond with only one of the following two words: **FOLLOW-UP** or **NEW_TOPIC**.
+"""
+
 def get_system_prompt(language: str) -> str:
     """Get system prompt based on language"""
     return IMMIGRATION_SYSTEM_PROMPT_ES if language == "spanish" else IMMIGRATION_SYSTEM_PROMPT_EN

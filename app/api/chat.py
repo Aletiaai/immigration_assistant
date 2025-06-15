@@ -12,69 +12,73 @@ import logging
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# In-memory chat storage (replace with database for production)
-chat_sessions: Dict[str, List[ChatHistory]] = {}
+# In-memory storage now holds session objects containing both history and document context.
+chat_sessions: Dict[str, Dict[str, Any]] = {}
+
+def get_session(session_id: str) -> Dict[str, Any]:
+    """Retrieves or creates a chat session object. A session contains 'history' and 'document_context'."""
+    if session_id not in chat_sessions:
+        chat_sessions[session_id] = {
+            "history": [],
+            "document_context": None
+        }
+    return chat_sessions[session_id]
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(message: ChatMessage, session_id: str = "default", service: RAGService = Depends(get_rag_service)):
+    """It checks for topic changes within a document chat session."""
     try:
         # Get chat history for this session
-        history = chat_sessions.get(session_id, [])
-        logger.info(f"--- ChatEndpoint: Retrieved history for session {session_id}, {len(history)} messages ---")
-        
+        session = get_session(session_id)        
         # Convert history to format expected by RAG service
         history_for_rag = [
             {"question": h.question, "response": h.response} 
-            for h in history
+            for h in session["history"]
         ]
+
+        query_general_kb = False # Flag to decide which RAG method to call
+
         logger.debug(f"--- ChatEndpoint: History for RAG: {history_for_rag} ---")
-        
-        # Query RAG system
-        result = service.query(message.message, history_for_rag)
-        logger.info(f"--- ChatEndpoint: RAG query result: {result} ---")
-        
-        # Validate result structure
-        if not isinstance(result, dict):
-            logger.error(f"--- ChatEndpoint: RAG result is not a dictionary: {type(result)} ---")
-            raise ValueError("Invalid response type from RAG service")
-        required_keys = ["response", "sources", "language"]
-        missing_keys = [key for key in required_keys if key not in result]
-        if missing_keys:
-            logger.error(f"--- ChatEndpoint: Missing required keys in RAG result: {missing_keys}, result: {result} ---")
-            raise ValueError(f"Missing required keys in RAG result: {missing_keys}")
-        if not isinstance(result["response"], str):
-            logger.error(f"--- ChatEndpoint: Response is not a string: {type(result['response'])}, value: {result['response']} ---")
-            raise ValueError("Response must be a string")
-        if not isinstance(result["sources"], list):
-            logger.error(f"--- ChatEndpoint: Sources is not a list: {type(result['sources'])}, value: {result['sources']} ---")
-            raise ValueError("Sources must be a list")
-        if not isinstance(result["language"], str):
-            logger.error(f"--- ChatEndpoint: Language is not a string: {type(result['language'])}, value: {result['language']} ---")
-            raise ValueError("Language must be a string")
+
+        # Check if there is a document context in the current session
+        if session.get("document_context"):
+            logger.info(f"--- ChatEndpoint: Found document context for session {session_id}. Querying against document. ---")
+            # A document is in context. Check if this is a follow-up or a new topic.
+            is_follow_up = service.is_topic_follow_up(message.message, history_for_rag)
+            if is_follow_up:
+                logger.info(f"--- ChatEndpoint: Follow-up question detected for session {session_id}. Querying document. ---")
+                result = service.query_with_context(
+                    question=message.message,
+                    chat_history=history_for_rag,
+                    document_chunks=session["document_context"]["chunks"]
+                )
+            else:
+                # The user changed the topic. Query the general KB instead.
+                logger.info(f"--- ChatEndpoint: New topic detected for session {session_id}. Querying general KB. ---")
+                query_general_kb = True
+
+        else:
+            # No document in context, so always query the general KB
+            query_general_kb = True
+
+        if query_general_kb:
+            result = service.query(message.message, history_for_rag)
         
         # Create response
         response = ChatResponse(
-            response=result["response"],
-            sources=result["sources"],
-            language=result["language"],
-            timestamp=datetime.now()
+            response = result["response"],
+            sources = result.get("sources",[]),
+            language=result.get("language", "en"),
+            timestamp = datetime.now()
         )
         
-        # Store in chat history
-        chat_history = ChatHistory(
-            question=message.message,
-            response=result["response"],
-            sources=result["sources"],
-            timestamp=datetime.now()
-        )
-        
-        if session_id not in chat_sessions:
-            chat_sessions[session_id] = []
-        chat_sessions[session_id].append(chat_history)
-        
-        # Keep only last MAX_MESSAGES_PER_SESSION number of messages
-        if len(chat_sessions[session_id]) > MAX_MESSAGES_PER_SESSION:
-            chat_sessions[session_id] = chat_sessions[session_id][-MAX_MESSAGES_PER_SESSION:]
+        # Update session history
+        session["history"].append(ChatHistory(
+            question = message.message,
+            response = response.response,
+            sources = response.sources,
+            timestamp = response.timestamp
+        ))
         
         logger.info(f"--- ChatEndpoint: Response prepared for query: {message.message} ---")
         return response
@@ -85,33 +89,35 @@ async def chat_endpoint(message: ChatMessage, session_id: str = "default", servi
 
 @router.get("/chat/history/{session_id}")
 async def get_chat_history(session_id: str):
+    # This endpoint can be used for debugging or retrieving session data
     try:
-        history = chat_sessions.get(session_id, [])
-        logger.info(f"--- ChatEndpoint: Retrieved history for session {session_id}, {len(history)} messages ---")
-        return {"session_id": session_id, "history": history}
+        session = get_session(session_id)
+        logger.info(f"--- ChatEndpoint: Retrieved history for session {session_id}, {len(session)} messages ---")
+        return {"session_id": session_id, "history": session}
     except Exception as e:
         logger.error(f"--- ChatEndpoint: Failed to retrieve chat history: {str(e)} ---", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to retrieve chat history: {str(e)}")
 
 @router.delete("/chat/history/{session_id}")
 async def clear_chat_history(session_id: str):
+    """Clears all data for a session, including history and document context."""
     try:
         if session_id in chat_sessions:
             del chat_sessions[session_id]
-            logger.info(f"--- ChatEndpoint: Cleared chat history for session {session_id} ---")
-        return {"message": "Chat history cleared", "session_id": session_id}
+            logger.info(f"--- ChatEndpoint: Cleared all data for session {session_id} ---")
+        return {"message": "Chat history and document context cleared", "session_id": session_id}
     except Exception as e:
         logger.error(f"--- ChatEndpoint: Failed to clear chat history: {str(e)} ---", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to clear chat history: {str(e)}")
 
 @router.post("/chat/document", response_model=DocumentProcessingResponse)
-async def process_document_with_chat(
+async def upload_and_chat(
     file: UploadFile = File(...),
     message: str = Form(...),
-    instructions: str = Form(default=""),
-    session_id: str = Form(default="default"),
+    session_id: str = Form("default"),
     service: RAGService = Depends(get_rag_service)
 ):
+    """This endpoint calls 'start_document_chat' to initiate a multi-turn document conversation."""
     try:
         # Validate file type
         if not (file.filename.lower().endswith('.pdf') or file.filename.lower().endswith('.docx')):
@@ -126,17 +132,34 @@ async def process_document_with_chat(
         
         try:
             # Process document temporarily, passing the original filename
-            result = service.process_document_temporarily(temp_file_path, file.filename, message, instructions)
+            result, processed_chunks = service.start_document_chat(file_path = temp_file_path, question = message)
             logger.info(f"--- ChatEndpoint: Document processed: {file.filename}, result: {result} ---")
             
+            # Store the processed chunks in the user's session for follow-up questions
+            session = get_session(session_id)
+            session["document_context"] = {"filename": file.filename,"chunks": processed_chunks}
+            logger.info(f"--- ChatEndpoint: Document context for '{file.filename}' stored in session {session_id}. ---")
+
+            # Store this first interaction in the history
+            session["history"].append(ChatHistory(
+                question = message,
+                response = result["response"],
+                sources = result.get("sources", []),
+                timestamp = datetime.now()
+            ))
+
             return DocumentProcessingResponse(
-                response=result["response"],
-                document_filename=file.filename,
-                processing_status="completed",
-                sources=result.get("sources", []),
-                language=result.get("language", "en"),
-                timestamp=datetime.now()
+                response = result["response"],
+                document_filename = file.filename,
+                processing_status = "completed",
+                sources = result.get("sources", []),
+                language = result.get("language", "en"),
+                timestamp = datetime.now()
             )
+
+        except Exception as e:
+            logger.error(f"--- ChatEndpoint: Document chat initiation failed: {e} ---", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Document processing failed: {e}")
         finally:
             # Clean up temporary file
             if os.path.exists(temp_file_path):
