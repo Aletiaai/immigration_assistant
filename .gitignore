@@ -31,6 +31,7 @@ Thumbs.db
 
 # Data base
 */data/
+<<<<<<< HEAD
 */raw/
 */vectorestore/
 <<<<<<< HEAD
@@ -40,3 +41,8 @@ Thumbs.db
 =======
 */processed/
 >>>>>>> ea73ff7 (User-document querries processed locally and faster)
+=======
+data/raw/
+data/vectorstore/
+data/processed/
+>>>>>>> 3a27432 (Fix .gitignore to exclude vectorstore directory)
