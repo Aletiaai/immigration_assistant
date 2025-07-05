@@ -1,105 +1,67 @@
+# Path: app/core/config.py
+
 from pathlib import Path
 from dotenv import load_dotenv
 import os
-<<<<<<< HEAD
-<<<<<<< HEAD
 import secrets
 import hashlib
-=======
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-import secrets
-import hashlib
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
+
 load_dotenv()
 
-# Project paths
+# --- Project Paths ---
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 VECTORSTORE_DIR = DATA_DIR / "vectorstore"
 
-# FastAPI settings
+# --- FastAPI Settings ---
 API_TITLE = "Immigration Chatbot"
 API_VERSION = "1.0.0"
 DESRIPTION = "Chatbot for immigration law queries/Chatbot para consultar leyes migratorias"
 HOST = "0.0.0.0"
 PORT = 8000
 
-# Model settings
+# --- Model Settings ---
 OLLAMA_MODEL = "llama3"
 EMBEDDING_MODEL = "/root/local_models/paraphrase-multilingual-mpnet-base-v2"
 
-# ChromaDB settings
+# --- ChromaDB Settings ---
 CHROMA_PERSIST_DIR = str(VECTORSTORE_DIR)
 COLLECTION_NAME = "documents"
 
-# Chunking settings
-MIN_SECTION_TEXT_LENGTH = 50  # Minimum characters for a text block to be considered substantial content
+# --- Chunking Settings ---
+MIN_SECTION_TEXT_LENGTH = 50
 DEFAULT_HEADER_TEXT = "General Content"
-CHUNK_SIZE = 750  # Target character size for final chunks
-CHUNK_OVERLAP = 75 # Character overlap between chunks
+CHUNK_SIZE = 750
+CHUNK_OVERLAP = 75
 
-# Header types from Document AI Layout Parser (from your JSON example)
-DOCUMENT_AI_HEADER_TYPES = {"heading-1", "heading-2", "heading-3", "heading-4", "heading-5", "heading-6"} # Add more if they appear
-DOCUMENT_AI_PARAGRAPH_TYPES = {"paragraph"} # "text" might also appear in some processors
-DOCUMENT_AI_LIST_ITEM_TYPES = {"list_item"} # Add if your docs have lists
-DOCUMENT_AI_FOOTER_TYPES = {"footer"} # To potentially ignore footers
-DOCUMENT_AI_TABLE_TYPES = {"table"}   # To handle tables specifically
+# --- Document AI Layout Types ---
+DOCUMENT_AI_HEADER_TYPES = {"heading-1", "heading-2", "heading-3", "heading-4", "heading-5", "heading-6"}
+DOCUMENT_AI_PARAGRAPH_TYPES = {"paragraph"}
+DOCUMENT_AI_LIST_ITEM_TYPES = {"list_item"}
+DOCUMENT_AI_FOOTER_TYPES = {"footer"}
+DOCUMENT_AI_TABLE_TYPES = {"table"}
 
-# Ensure directories exist
+# --- Google Document AI Settings ---
+GOOGLE_PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID", "")
+GOOGLE_LOCATION = os.getenv("GOOGLE_LOCATION", "us")
+# Using the more specific variable name for the parser
+GOOGLE_PROCESSOR_ID = os.getenv("GOOGLE_PARSER_PROCESSOR_ID", "")
+
+# --- Chat & RAG Settings ---
+MAX_MESSAGES_PER_SESSION = 10
+CONTEXT_HISTORY_MESSAGES = 6 
+MAX_CHUNKS_RETRIEVED = 3
+
+# --- Admin Authentication ---
+# For session validation and password hashing
+SECRET_KEY = secrets.token_urlsafe(32)
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123") # Load from .env or use default
+ADMIN_PASSWORD_HASH = hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
+
+# For JWT token generation
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-super-secret-key-that-is-long-and-random") # Load from .env
+TOKEN_EXPIRE_HOURS = 8
+
+# --- Ensure Directories Exist ---
 DATA_DIR.mkdir(exist_ok=True)
 VECTORSTORE_DIR.mkdir(exist_ok=True)
-
-# Google Document AI settings (for online document processing)
-GOOGLE_PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID", "")
-GOOGLE_LOCATION = os.getenv("GOOGLE_LOCATION", "us")  # or "eu"
-<<<<<<< HEAD
-<<<<<<< HEAD
-GOOGLE_PROCESSOR_ID = os.getenv("GOOGLE_PARSER_PROCESSOR_ID", "") #GOOGLE_PROCESSOR_ID   GOOGLE_PARSER_PROCESSOR_ID
-
-# Chat settings
-MAX_MESSAGES_PER_SESSION = 10
-CONTEXT_HISTORY_MESSAGES = 6
-
-# Chunk settings
-MAX_CHUNKS_RETRIEVED = 3
-
-# auth configuration 
-SECRET_KEY = secrets.token_urlsafe(32)  # Generate secure key
-ADMIN_PASSWORD_HASH = hashlib.sha256("admin123".encode()).hexdigest()
-TOKEN_EXPIRE_HOURS = 8
-
-# Admin Authentication
-ADMIN_PASSWORD = "your_secure_password_here"
-JWT_SECRET_KEY = "your-secret-key-here"
-<<<<<<< HEAD
-JWT_EXPIRE_HOURS = 8
-=======
-GOOGLE_PROCESSOR_ID = os.getenv("GOOGLE_PROCESSOR_ID", "") #GOOGLE_PROCESSOR_ID   GOOGLE_PARSER_PROCESSOR_ID
-=======
-GOOGLE_PROCESSOR_ID = os.getenv("GOOGLE_PARSER_PROCESSOR_ID", "") #GOOGLE_PROCESSOR_ID   GOOGLE_PARSER_PROCESSOR_ID
->>>>>>> e1d6f52 (Improved chunking technique)
-
-# Chat settings
-MAX_MESSAGES_PER_SESSION = 10
-CONTEXT_HISTORY_MESSAGES = 5
-
-# Chunk settings
-MAX_CHUNKS_RETRIEVED = 3
-<<<<<<< HEAD
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-
-# auth configuration 
-SECRET_KEY = secrets.token_urlsafe(32)  # Generate secure key
-ADMIN_PASSWORD_HASH = hashlib.sha256("admin123".encode()).hexdigest()
-TOKEN_EXPIRE_HOURS = 8
-
-# Admin Authentication
-ADMIN_PASSWORD = "your_secure_password_here"  # Change this!
-JWT_SECRET_KEY = "your-secret-key-here"  # Change this!
-JWT_EXPIRE_HOURS = 8
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-=======
-JWT_EXPIRE_HOURS = 8
->>>>>>> ea73ff7 (User-document querries processed locally and faster)

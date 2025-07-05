@@ -1,19 +1,17 @@
-// Script for app/static/js/documents.js
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
+// Path: app/static/js/document.js
+
 document.addEventListener('DOMContentLoaded', async () => {
+    // This script requires an admin token to function.
     const token = localStorage.getItem('admin_token');
 
-    // Redirect to login if no token is found
+    // If no token is found, redirect to the login page immediately.
     if (!token) {
         window.location.href = '/login';
         return;
     }
 
+    // Verify the token with the backend to ensure it's still valid.
     try {
-        // Verify token with the backend
         const response = await fetch('/api/auth/verify', {
             method: 'GET',
             headers: {
@@ -21,13 +19,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
+        // If the token is invalid (e.g., expired), clear it and redirect to login.
         if (!response.ok) {
             localStorage.removeItem('admin_token');
             window.location.href = '/login';
             return;
         }
 
-        // Token is valid; initialize document management
+        // If the token is valid, initialize the page's functionality.
         initializeDocumentManagement();
     } catch (error) {
         console.error('Authentication check failed:', error);
@@ -36,89 +35,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// This function sets up the entire document management page.
 function initializeDocumentManagement() {
-<<<<<<< HEAD
-=======
-document.addEventListener('DOMContentLoaded', () => {
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
     const fileInput = document.getElementById('file-input');
     const uploadBtn = document.getElementById('upload-btn');
     const uploadStatusEl = document.getElementById('upload-status');
-
     const documentListEl = document.getElementById('document-list');
     const listStatusEl = document.getElementById('list-status');
     const refreshDocsBtn = document.getElementById('refresh-docs-btn');
-
     const kbChunksEl = document.getElementById('kb-chunks');
     const kbReadyStatusEl = document.getElementById('kb-ready-status');
     const kbStatusMessageEl = document.getElementById('kb-status-message');
     const refreshKbStatusBtn = document.getElementById('refresh-kb-status-btn');
 
     const API_BASE_URL = '/api/documents';
+    const AUTH_HEADER = { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` };
 
     // --- Utility Functions ---
-    function showStatusMessage(element, message, type = 'info') {
-        if (!element) return;
+    const showStatusMessage = (element, message, type = 'info') => {
         element.textContent = message;
-<<<<<<< HEAD
-<<<<<<< HEAD
         element.className = `status-message ${type}`;
-=======
-        element.className = `status-message ${type}`; // Applies .success, .error, or .info
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-        element.className = `status-message ${type}`;
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
         element.style.display = 'block';
-    }
+    };
 
-    function clearStatusMessage(element) {
-        if (!element) return;
+    const clearStatusMessage = (element) => {
         element.textContent = '';
         element.style.display = 'none';
-        element.className = 'status-message';
-    }
+    };
 
-    function setLoading(button, isLoading) {
-        if (!button) return;
+    const setLoading = (button, isLoading) => {
         button.disabled = isLoading;
-        button.innerHTML = isLoading ? '<div class="spinner-small"></div> Loading...' : button.dataset.originalText || button.textContent;
-        if (!isLoading && button.dataset.originalText) {
-            delete button.dataset.originalText;
-        } else if (isLoading && !button.dataset.originalText) {
-            button.dataset.originalText = button.textContent;
+        if (isLoading) {
+            button.dataset.originalText = button.innerHTML;
+            button.innerHTML = '<div class="spinner-small"></div> Loading...';
+        } else {
+            button.innerHTML = button.dataset.originalText || button.innerHTML;
         }
-    }
-<<<<<<< HEAD
-<<<<<<< HEAD
+    };
 
-=======
-    
-    // Add a smaller spinner style if not already in main CSS
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
+    // Add a smaller spinner style for buttons
     const styleSheet = document.createElement("style");
-    styleSheet.innerText = `.spinner-small { border: 2px solid rgba(0,0,0,0.1); width: 16px; height: 16px; border-radius: 50%; border-left-color: #667eea; animation: spin 0.8s ease infinite; display: inline-block; vertical-align: middle; margin-right: 5px; }`;
+    styleSheet.innerText = `.spinner-small { border: 2px solid rgba(0,0,0,0.1); width: 16px; height: 16px; border-radius: 50%; border-left-color: #667eea; animation: spin 0.8s ease infinite; display: inline-block; vertical-align: middle; margin-right: 5px; } @keyframes spin { to { transform: rotate(360deg); } }`;
     document.head.appendChild(styleSheet);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
+    // --- Core API Functions ---
 
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-    // --- Document Upload ---
     async function uploadDocument() {
-        if (!fileInput.files || fileInput.files.length === 0) {
-            showStatusMessage(uploadStatusEl, 'Please select a PDF file to upload.', 'error');
+        if (!fileInput.files.length) {
+            showStatusMessage(uploadStatusEl, 'Please select a PDF file.', 'error');
             return;
         }
-
         const file = fileInput.files[0];
         if (file.type !== 'application/pdf') {
             showStatusMessage(uploadStatusEl, 'Only PDF files are allowed.', 'error');
@@ -127,310 +93,103 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formData = new FormData();
         formData.append('file', file);
-
         setLoading(uploadBtn, true);
         clearStatusMessage(uploadStatusEl);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/upload`, {
-                method: 'POST',
-                body: formData,
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                }
-            });
-
-            if (response.status === 401) {
-                localStorage.removeItem('admin_token');
-                window.location.href = '/login';
-                return;
-            }
-
-<<<<<<< HEAD
-=======
-            });
-
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
+            const response = await fetch(`${API_BASE_URL}/upload`, { method: 'POST', body: formData, headers: AUTH_HEADER });
             const result = await response.json();
+            if (!response.ok) throw new Error(result.detail || 'Upload failed');
 
-            if (response.ok && result.status === 'processed') {
-                showStatusMessage(uploadStatusEl, `Success: ${result.message || 'Document uploaded and processed.'}`, 'success');
-<<<<<<< HEAD
-<<<<<<< HEAD
-                fileInput.value = '';
-                fetchDocumentList();
-                fetchKbStatus();
-=======
-                fileInput.value = ''; // Clear file input
-                fetchDocumentList(); // Refresh list
-                fetchKbStatus(); // Refresh KB status
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-                fileInput.value = '';
-                fetchDocumentList();
-                fetchKbStatus();
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-            } else {
-                showStatusMessage(uploadStatusEl, `Error: ${result.message || 'Upload failed.'} (Status: ${result.status})`, 'error');
-            }
+            showStatusMessage(uploadStatusEl, `Success: ${result.message}`, 'success');
+            fileInput.value = '';
+            fetchDocumentList();
+            fetchKbStatus();
         } catch (error) {
-            console.error('Upload error:', error);
-            showStatusMessage(uploadStatusEl, `Network or server error: ${error.message}`, 'error');
+            showStatusMessage(uploadStatusEl, `Error: ${error.message}`, 'error');
         } finally {
             setLoading(uploadBtn, false);
         }
     }
 
-    // --- Document List ---
     async function fetchDocumentList() {
         setLoading(refreshDocsBtn, true);
         listStatusEl.textContent = 'Loading documents...';
-        listStatusEl.className = 'status-message info';
-<<<<<<< HEAD
-<<<<<<< HEAD
         documentListEl.innerHTML = '';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/list`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                }
-            });
-
-            if (response.status === 401) {
-                localStorage.removeItem('admin_token');
-                window.location.href = '/login';
-                return;
-            }
-
-=======
-        documentListEl.innerHTML = ''; // Clear current list
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/list`);
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-        documentListEl.innerHTML = '';
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/list`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                }
-            });
-
-            if (response.status === 401) {
-                localStorage.removeItem('admin_token');
-                window.location.href = '/login';
-                return;
-            }
-
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            const response = await fetch(`${API_BASE_URL}/list`, { headers: AUTH_HEADER });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
 
             if (data.documents && data.documents.length > 0) {
-                listStatusEl.style.display = 'none';
+                clearStatusMessage(listStatusEl);
                 data.documents.forEach(doc => {
                     const li = document.createElement('li');
-                    const sizeMB = (doc.size / (1024 * 1024)).toFixed(2);
                     li.innerHTML = `
                         <span class="doc-name">${doc.filename}</span>
-                        <span class="doc-size">${sizeMB} MB</span>
+                        <span class="doc-size">${(doc.size / 1024 / 1024).toFixed(2)} MB</span>
                         <div class="doc-actions">
                             <button class="btn btn-danger btn-sm delete-doc-btn" data-filename="${doc.filename}">Delete</button>
-                        </div>
-                    `;
+                        </div>`;
                     documentListEl.appendChild(li);
                 });
-                attachDeleteListeners();
+                document.querySelectorAll('.delete-doc-btn').forEach(btn => btn.addEventListener('click', handleDeleteClick));
             } else {
-                listStatusEl.textContent = 'No documents found. Upload one to get started.';
-                listStatusEl.className = 'status-message info';
+                showStatusMessage(listStatusEl, 'No documents found.', 'info');
             }
         } catch (error) {
-            console.error('Error fetching document list:', error);
-            listStatusEl.textContent = `Error loading documents: ${error.message}`;
-            listStatusEl.className = 'status-message error';
+            showStatusMessage(listStatusEl, `Error loading documents: ${error.message}`, 'error');
         } finally {
             setLoading(refreshDocsBtn, false);
         }
     }
-
-    function attachDeleteListeners() {
-        document.querySelectorAll('.delete-doc-btn').forEach(button => {
-            button.addEventListener('click', async (event) => {
-                const filename = event.target.dataset.filename;
-                if (confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone.`)) {
-                    await deleteDocument(filename, event.target);
-                }
-            });
-        });
-    }
-
-    async function deleteDocument(filename, buttonElement) {
-        setLoading(buttonElement, true);
-<<<<<<< HEAD
-<<<<<<< HEAD
-        clearStatusMessage(listStatusEl);
-=======
-        clearStatusMessage(listStatusEl); // Clear general list status before specific op
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-        clearStatusMessage(listStatusEl);
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(filename)}`, {
-                method: 'DELETE',
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                }
-            });
-
-            if (response.status === 401) {
-                localStorage.removeItem('admin_token');
-                window.location.href = '/login';
-                return;
-            }
-
-<<<<<<< HEAD
-=======
-            });
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-            const result = await response.json();
-
-            if (response.ok) {
+    
+    async function handleDeleteClick(event) {
+        const btn = event.target;
+        const filename = btn.dataset.filename;
+        if (confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone.`)) {
+            setLoading(btn, true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(filename)}`, { method: 'DELETE', headers: AUTH_HEADER });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.detail || 'Delete failed');
+                
                 showStatusMessage(listStatusEl, `"${filename}" deleted successfully.`, 'success');
-<<<<<<< HEAD
-<<<<<<< HEAD
                 fetchDocumentList();
                 fetchKbStatus();
-=======
-                fetchDocumentList(); // Refresh the list
-                fetchKbStatus();   // Refresh KB status as deletion might affect it
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-                fetchDocumentList();
-                fetchKbStatus();
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-            } else {
-                showStatusMessage(listStatusEl, `Error deleting "${filename}": ${result.detail || 'Unknown error'}`, 'error');
+            } catch (error) {
+                showStatusMessage(listStatusEl, `Error deleting "${filename}": ${error.message}`, 'error');
+                setLoading(btn, false);
             }
-        } catch (error) {
-            console.error('Delete error:', error);
-            showStatusMessage(listStatusEl, `Network or server error during deletion: ${error.message}`, 'error');
-        } finally {
-<<<<<<< HEAD
-<<<<<<< HEAD
-            // No need to reset loading state here as the list will refresh
         }
     }
 
-=======
-           // setLoading(buttonElement, false); // This is tricky because the button is removed on refresh
-           // No need to reset loading state here as the list will refresh and button will be gone or re-rendered.
-        }
-    }
-
-
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-            // No need to reset loading state here as the list will refresh
-        }
-    }
-
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-    // --- Knowledge Base Status ---
     async function fetchKbStatus() {
         setLoading(refreshKbStatusBtn, true);
         clearStatusMessage(kbStatusMessageEl);
-        kbChunksEl.textContent = 'Loading...';
-        kbReadyStatusEl.textContent = 'Loading...';
 
         try {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-            const response = await fetch(`${API_BASE_URL}/status`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                }
-            });
-
-            if (response.status === 401) {
-                localStorage.removeItem('admin_token');
-                window.location.href = '/login';
-                return;
-            }
-
-<<<<<<< HEAD
-=======
-            const response = await fetch(`${API_BASE_URL}/status`);
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            const response = await fetch(`${API_BASE_URL}/status`, { headers: AUTH_HEADER });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
 
-            kbChunksEl.textContent = data.total_chunks !== undefined ? data.total_chunks : 'N/A';
-            kbReadyStatusEl.textContent = data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : 'N/A';
-            if (data.status === 'empty') {
-                kbReadyStatusEl.style.color = 'orange';
-            } else if (data.status === 'ready') {
-                kbReadyStatusEl.style.color = 'green';
-            } else {
-                kbReadyStatusEl.style.color = 'red';
-            }
+            kbChunksEl.textContent = data.total_chunks;
+            kbReadyStatusEl.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+            kbReadyStatusEl.style.color = data.status === 'ready' ? 'green' : (data.status === 'empty' ? 'orange' : 'red');
             showStatusMessage(kbStatusMessageEl, `Status as of ${new Date(data.timestamp).toLocaleString()}`, 'info');
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
         } catch (error) {
-            console.error('Error fetching KB status:', error);
-            kbChunksEl.textContent = 'Error';
-            kbReadyStatusEl.textContent = 'Error';
             showStatusMessage(kbStatusMessageEl, `Error loading KB status: ${error.message}`, 'error');
         } finally {
             setLoading(refreshKbStatusBtn, false);
         }
     }
 
-    // --- Event Listeners ---
-    if (uploadBtn) uploadBtn.addEventListener('click', uploadDocument);
-    if (refreshDocsBtn) refreshDocsBtn.addEventListener('click', fetchDocumentList);
-    if (refreshKbStatusBtn) refreshKbStatusBtn.addEventListener('click', fetchKbStatus);
-
-    // --- Initial Load ---
+    // --- Initial Load and Event Listeners ---
+    uploadBtn.addEventListener('click', uploadDocument);
+    refreshDocsBtn.addEventListener('click', fetchDocumentList);
+    refreshKbStatusBtn.addEventListener('click', fetchKbStatus);
+    
     fetchDocumentList();
     fetchKbStatus();
-<<<<<<< HEAD
-<<<<<<< HEAD
 }
-=======
-});
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-}
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)

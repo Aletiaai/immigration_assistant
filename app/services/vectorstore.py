@@ -1,78 +1,47 @@
+# Path: app/services/vectorstore.py
+
 import chromadb
-from typing import List, Dict, Optional
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> e1d6f52 (Improved chunking technique)
+from typing import List, Dict
 from app.core.config import CHROMA_PERSIST_DIR, COLLECTION_NAME, DEFAULT_HEADER_TEXT
 import re
 import logging
 
 logger = logging.getLogger(__name__)
-<<<<<<< HEAD
-=======
-from app.core.config import CHROMA_PERSIST_DIR, COLLECTION_NAME
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> e1d6f52 (Improved chunking technique)
 
 class VectorStoreService:
+    """
+    Manages all interactions with the ChromaDB vector store, including adding
+    documents with rich metadata and performing similarity searches.
+    """
     def __init__(self):
         try:
             self.client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
             self.collection = self.client.get_or_create_collection(
                 name=COLLECTION_NAME,
-                metadata={"hnsw:space": "cosine"}
+                metadata={"hnsw:space": "cosine"} # Using cosine distance for semantic similarity
             )
-<<<<<<< HEAD
-<<<<<<< HEAD
             logger.info(f"--- VectorStoreService: Initialized ChromaDB client and collection '{COLLECTION_NAME}'. ---")
         except Exception as e:
-            logger.error(f"--- VectorStoreService: Failed to initialize ChromaDB: {str(e)} ---", exc_info=True)
-=======
-        except Exception as e:
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-            logger.info(f"--- VectorStoreService: Initialized ChromaDB client and collection '{COLLECTION_NAME}'. ---")
-        except Exception as e:
-            logger.error(f"--- VectorStoreService: Failed to initialize ChromaDB: {str(e)} ---", exc_info=True)
->>>>>>> e1d6f52 (Improved chunking technique)
-            raise Exception(f"Failed to initialize ChromaDB: {str(e)}")
-    
-    def add_documents(self, chunks: List[Dict], embeddings: List[List[float]]) -> bool:
-        try:
-<<<<<<< HEAD
-<<<<<<< HEAD
-            ids = [f"{chunk.get('document_name', 'unknown_doc')}_page{chunk.get('page',0)}_header_{re.sub(r'[^a-zA-Z0-9_-]', '', chunk.get('header', DEFAULT_HEADER_TEXT)[:30])}_{i}" for i, chunk in enumerate(chunks)]
+            logger.error(f"--- VectorStoreService: Failed to initialize ChromaDB: {e} ---", exc_info=True)
+            raise
 
+    def add_documents(self, chunks: List[Dict], embeddings: List[List[float]]) -> bool:
+        """Adds a list of chunks and their embeddings to the vector store."""
+        try:
+            # Create a unique and descriptive ID for each chunk
+            ids = [
+                f"{chunk.get('document_name', 'doc')}_p{chunk.get('page', 0)}_{i}"
+                for i, chunk in enumerate(chunks)
+            ]
+            
             documents = [chunk["content"] for chunk in chunks]
+            
             metadatas = [{
                 "page": str(chunk.get("page", "N/A")),
-                "type": chunk.get("type", "block"),
-                "source": chunk.get("document_name", "unknown_source"),
+                "source": chunk.get("source", "Unknown"),
                 "header": chunk.get("header", DEFAULT_HEADER_TEXT),
-                "questions": "|".join(chunk.get("questions", [])),  # Store questions as pipe-separated string
-                "original_content": chunk.get("original_content", chunk["content"])  # Store original content
-<<<<<<< HEAD
-=======
-            ids = [f"doc_{i}" for i in range(len(chunks))]
-=======
-            ids = [f"{chunk.get('document_name', 'unknown_doc')}_page{chunk.get('page',0)}_header_{re.sub(r'[^a-zA-Z0-9_-]', '', chunk.get('header', DEFAULT_HEADER_TEXT)[:30])}_{i}" for i, chunk in enumerate(chunks)]
-
->>>>>>> e1d6f52 (Improved chunking technique)
-            documents = [chunk["content"] for chunk in chunks]
-            metadatas = [{
-                "page": str(chunk.get("page", "N/A")), # Ensure page is string for Chroma
-                "type": chunk.get("type", "block"),
-<<<<<<< HEAD
-                "source": chunk.get("source", "unknown")
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-                "source": chunk.get("document_name", "unknown_source"),
-                "header": chunk.get("header", DEFAULT_HEADER_TEXT)
->>>>>>> e1d6f52 (Improved chunking technique)
-=======
->>>>>>> 2af9797 (Enhanced semantic meaning with questions)
+                "questions": "|".join(chunk.get("questions", [])),
+                "original_content": chunk.get("original_content", chunk["content"])
             } for chunk in chunks]
             
             self.collection.add(
@@ -81,126 +50,63 @@ class VectorStoreService:
                 metadatas=metadatas,
                 ids=ids
             )
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> e1d6f52 (Improved chunking technique)
             logger.info(f"--- VectorStoreService: Added {len(chunks)} documents to collection '{COLLECTION_NAME}'. ---")
             return True
         except Exception as e:
-            logger.error(f"--- VectorStoreService: Failed to add documents: {str(e)} ---", exc_info=True)
-<<<<<<< HEAD
-=======
-            return True
-        except Exception as e:
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> e1d6f52 (Improved chunking technique)
-            raise Exception(f"Failed to add documents: {str(e)}")
-    
+            logger.error(f"--- VectorStoreService: Failed to add documents: {e} ---", exc_info=True)
+            raise
+
     def search(self, query_embedding: List[float], n_results: int = 3) -> List[Dict]:
+        """Performs a similarity search in the vector store."""
         try:
             results = self.collection.query(
                 query_embeddings=[query_embedding],
-<<<<<<< HEAD
-<<<<<<< HEAD
                 n_results=n_results,
                 include=["metadatas", "documents", "distances"]
-=======
-                n_results=n_results
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-                n_results=n_results,
-                include=["metadatas", "documents", "distances"]
->>>>>>> e1d6f52 (Improved chunking technique)
             )
             
             search_results = []
-            if results["documents"] and results["documents"][0]:
-<<<<<<< HEAD
-<<<<<<< HEAD
+            if results and results["documents"] and results["documents"][0]:
                 for i, doc_content in enumerate(results["documents"][0]):
                     metadata = results["metadatas"][0][i] if results["metadatas"] and results["metadatas"][0] else {}
-                    distance = results["distances"][0][i] if results["distances"] and results["distances"][0] else 0.0
+                    distance = results["distances"][0][i] if results["distances"] and results["distances"][0] else float('inf')
+                    
+                    # Add original_content to the metadata if it's not already there
+                    if 'original_content' not in metadata:
+                        metadata['original_content'] = doc_content
+
                     search_results.append({
                         "content": doc_content,
                         "metadata": metadata,
                         "distance": distance
                     })
+
             logger.debug(f"--- VectorStoreService: Search returned {len(search_results)} results. ---")
             return search_results
         except Exception as e:
-            logger.error(f"--- VectorStoreService: Vector search failed: {str(e)} ---", exc_info=True)
-=======
-                for i, doc in enumerate(results["documents"][0]):
-=======
-                for i, doc_content in enumerate(results["documents"][0]):
-                    metadata = results["metadatas"][0][i] if results["metadatas"] and results["metadatas"][0] else {}
-                    distance = results["distances"][0][i] if results["distances"] and results["distances"][0] else 0.0
->>>>>>> e1d6f52 (Improved chunking technique)
-                    search_results.append({
-                        "content": doc_content,
-                        "metadata": metadata,
-                        "distance": distance
-                    })
-            logger.debug(f"--- VectorStoreService: Search returned {len(search_results)} results. ---")
-            return search_results
-        except Exception as e:
-<<<<<<< HEAD
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-            logger.error(f"--- VectorStoreService: Vector search failed: {str(e)} ---", exc_info=True)
->>>>>>> e1d6f52 (Improved chunking technique)
-            raise Exception(f"Vector search failed: {str(e)}")
-    
+            logger.error(f"--- VectorStoreService: Vector search failed: {e} ---", exc_info=True)
+            raise
+
     def get_collection_count(self) -> int:
+        """Returns the total number of items in the collection."""
         try:
-<<<<<<< HEAD
-<<<<<<< HEAD
             count = self.collection.count()
             logger.info(f"--- VectorStoreService: Collection '{COLLECTION_NAME}' has {count} items. ---")
             return count
         except Exception as e:
-            logger.error(f"--- VectorStoreService: Failed to get collection count: {str(e)} ---", exc_info=True)
-            raise Exception(f"Failed to get collection count: {str(e)}")
-        
+            logger.error(f"--- VectorStoreService: Failed to get collection count: {e} ---", exc_info=True)
+            raise
+
     def delete_collection(self):
-        """Deletes the collection."""
+        """Deletes the entire collection. USE WITH CAUTION."""
         try:
             self.client.delete_collection(name=COLLECTION_NAME)
             logger.info(f"--- VectorStoreService: Collection '{COLLECTION_NAME}' deleted. ---")
-            # Recreate it empty if you want to continue using the service instance
+            # Recreate the collection so the service can continue to be used without restarting
             self.collection = self.client.get_or_create_collection(
                 name=COLLECTION_NAME,
                 metadata={"hnsw:space": "cosine"}
             )
         except Exception as e:
-            logger.error(f"--- VectorStoreService: Failed to delete collection: {str(e)} ---", exc_info=True)
-            raise Exception(f"Failed to delete collection: {str(e)}")
-=======
-            return self.collection.count()
-        except Exception as e:
-            raise Exception(f"Failed to get collection count: {str(e)}")
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-            count = self.collection.count()
-            logger.info(f"--- VectorStoreService: Collection '{COLLECTION_NAME}' has {count} items. ---")
-            return count
-        except Exception as e:
-            logger.error(f"--- VectorStoreService: Failed to get collection count: {str(e)} ---", exc_info=True)
-            raise Exception(f"Failed to get collection count: {str(e)}")
-        
-    def delete_collection(self):
-        """Deletes the collection."""
-        try:
-            self.client.delete_collection(name=COLLECTION_NAME)
-            logger.info(f"--- VectorStoreService: Collection '{COLLECTION_NAME}' deleted. ---")
-            # Recreate it empty if you want to continue using the service instance
-            self.collection = self.client.get_or_create_collection(
-                name=COLLECTION_NAME,
-                metadata={"hnsw:space": "cosine"}
-            )
-        except Exception as e:
-            logger.error(f"--- VectorStoreService: Failed to delete collection: {str(e)} ---", exc_info=True)
-            raise Exception(f"Failed to delete collection: {str(e)}")
->>>>>>> e1d6f52 (Improved chunking technique)
+            logger.error(f"--- VectorStoreService: Failed to delete collection: {e} ---", exc_info=True)
+            raise

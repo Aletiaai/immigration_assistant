@@ -1,18 +1,13 @@
+// Path: app/static/js/chat.js
+
 class ChatInterface {
     constructor() {
-        this.sessionId = 'default';
+        this.sessionId = 'default-' + Date.now(); // Create a unique session ID
         this.isLoading = false;
-<<<<<<< HEAD
-<<<<<<< HEAD
         this.attachedFile = null;
-=======
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-        this.attachedFile = null;
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
         this.initializeElements();
         this.attachEventListeners();
-        this.updateStatus();
+        this.checkSystemHealth();
     }
 
     initializeElements() {
@@ -20,372 +15,120 @@ class ChatInterface {
         this.messageInput = document.getElementById('message-input');
         this.sendBtn = document.getElementById('send-btn');
         this.clearBtn = document.getElementById('clear-chat');
-        this.statusElement = document.getElementById('status');
-<<<<<<< HEAD
-<<<<<<< HEAD
         this.adminBtn = document.getElementById('admin-btn');
         this.dropZone = document.getElementById('drop-zone');
         this.attachFileBtn = document.getElementById('attach-file-btn');
         this.fileInput = document.getElementById('file-input');
         this.fileNameSpan = document.getElementById('file-name');
-<<<<<<< HEAD
     }
 
     attachEventListeners() {
         this.sendBtn.addEventListener('click', () => this.sendMessage());
         this.clearBtn.addEventListener('click', () => this.clearChat());
-        this.adminBtn.addEventListener('click', () => {
-            window.location.href = '/login';
-        });
-        this.messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                if (e.shiftKey) {
-                    return;
-                } else {
-=======
-=======
-        this.adminBtn = document.getElementById('admin-btn');
->>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
-=======
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-    }
+        this.adminBtn.addEventListener('click', () => { window.location.href = '/login'; });
 
-    attachEventListeners() {
-        this.sendBtn.addEventListener('click', () => this.sendMessage());
-        this.clearBtn.addEventListener('click', () => this.clearChat());
-        this.adminBtn.addEventListener('click', () => {
-            window.location.href = '/login';
-        });
         this.messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                if (e.shiftKey) {
-                    return;
-                } else {
-<<<<<<< HEAD
-                    // Send message with Enter
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-                    e.preventDefault();
-                    this.sendMessage();
-                }
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendMessage();
             }
         });
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 
-        // Auto-resize textarea
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
         this.messageInput.addEventListener('input', () => {
             this.messageInput.style.height = 'auto';
             this.messageInput.style.height = this.messageInput.scrollHeight + 'px';
         });
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
+
+        // Drag and Drop Listeners
         this.dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             this.dropZone.classList.add('dragover');
         });
-        this.dropZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            this.dropZone.classList.remove('dragover');
-        });
+        this.dropZone.addEventListener('dragleave', () => this.dropZone.classList.remove('dragover'));
         this.dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             this.dropZone.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                this.handleFile(files[0]);
+            if (e.dataTransfer.files.length > 0) {
+                this.handleFile(e.dataTransfer.files[0]);
             }
         });
-        this.attachFileBtn.addEventListener('click', () => {
-            this.fileInput.click();
-        });
-        this.fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                this.handleFile(e.target.files[0]);
+
+        // Attach Button and File Input Listeners
+        this.attachFileBtn.addEventListener('click', () => this.fileInput.click());
+        this.fileInput.addEventListener('change', () => {
+            if (this.fileInput.files.length > 0) {
+                this.handleFile(this.fileInput.files[0]);
             }
         });
     }
 
     handleFile(file) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.docx')) {
-=======
-        if (file.type === 'application/pdf' || file.name.toLowerCase().endswith('.docx')) {
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-=======
-        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.docx')) {
->>>>>>> ea73ff7 (User-document querries processed locally and faster)
+        // Corrected JavaScript method name: endsWith (with a capital W)
+        if (file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.docx'))) {
             this.attachedFile = file;
             this.fileNameSpan.textContent = `Attached: ${file.name}`;
         } else {
             alert('Only PDF and DOCX files are supported.');
-            this.fileInput.value = '';
+            this.attachedFile = null;
+            this.fileNameSpan.textContent = '';
+            this.fileInput.value = ''; // Clear the file input
         }
-<<<<<<< HEAD
-=======
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
     }
 
     async sendMessage() {
         const message = this.messageInput.value.trim();
-        
-        if (!message || this.isLoading) {
+        if ((!message && !this.attachedFile) || this.isLoading) {
             return;
         }
 
+        this.setLoading(true);
+        const userMessage = message || `File attached: ${this.attachedFile.name}`;
+        this.addMessage(userMessage, 'user', [], this.attachedFile ? this.attachedFile.name : null);
+
+        // Store file to send, then clear UI state immediately
+        const fileToSend = this.attachedFile;
+        this.messageInput.value = '';
+        this.messageInput.style.height = 'auto';
+        this.fileNameSpan.textContent = '';
+        this.fileInput.value = '';
+        this.attachedFile = null;
+
         try {
-            this.setLoading(true);
-<<<<<<< HEAD
-<<<<<<< HEAD
-            this.addMessage(message, 'user', [], this.attachedFile ? this.attachedFile.name : null);
-            this.messageInput.value = '';
-            this.messageInput.style.height = 'auto';
-            this.fileNameSpan.textContent = '';
-            this.fileInput.value = '';
-
             let result;
-            if (this.attachedFile) {
+            if (fileToSend) {
                 const formData = new FormData();
-                formData.append('file', this.attachedFile);
-                formData.append('message', message);
+                formData.append('file', fileToSend);
+                formData.append('message', message); // Send message even if empty, API handles it
                 formData.append('session_id', this.sessionId);
-                formData.append('instructions', '');
-                const response = await fetch('/api/chat/document', {
-                    method: 'POST',
-                    body: formData
-                });
-                if (!response.ok) {
-                    let errorData;
-                    try {
-                        errorData = await response.json();
-                    } catch {
-                        errorData = { detail: 'Failed to parse error response' };
-                    }
-                    console.error('API Error Response:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        errorData,
-                        responseText: await response.text()
-                    });
-                    throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
-                }
+                
+                const response = await fetch('/api/chat/document', { method: 'POST', body: formData });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 result = await response.json();
-                console.log('Parsed API Response (Document):', result);
             } else {
                 result = await this.callChatAPI(message);
-                console.log('Parsed API Response (Text):', result);
             }
-
-            // Validate response structure
-            if (!result.response || !Array.isArray(result.sources) || !result.language || !result.timestamp) {
-                console.error('Invalid Response Structure:', result);
-                throw new Error('Invalid response structure from API');
-            }
-
-            this.addMessage(result.response, 'assistant', result.sources, this.attachedFile ? result.document_filename : null);
-
+            this.addMessage(result.response, 'assistant', result.sources, result.document_filename);
         } catch (error) {
-            console.error('Chat error:', error.message, error.stack);
-=======
-            this.addMessage(message, 'user');
-=======
-            this.addMessage(message, 'user', [], this.attachedFile ? this.attachedFile.name : null);
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-            this.messageInput.value = '';
-            this.messageInput.style.height = 'auto';
-            this.fileNameSpan.textContent = '';
-            this.fileInput.value = '';
-
-            let result;
-            if (this.attachedFile) {
-                const formData = new FormData();
-                formData.append('file', this.attachedFile);
-                formData.append('message', message);
-                formData.append('session_id', this.sessionId);
-                formData.append('instructions', '');
-                const response = await fetch('/api/chat/document', {
-                    method: 'POST',
-                    body: formData
-                });
-                if (!response.ok) {
-                    let errorData;
-                    try {
-                        errorData = await response.json();
-                    } catch {
-                        errorData = { detail: 'Failed to parse error response' };
-                    }
-                    console.error('API Error Response:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        errorData,
-                        responseText: await response.text()
-                    });
-                    throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
-                }
-                result = await response.json();
-                console.log('Parsed API Response (Document):', result);
-            } else {
-                result = await this.callChatAPI(message);
-                console.log('Parsed API Response (Text):', result);
-            }
-
-            // Validate response structure
-            if (!result.response || !Array.isArray(result.sources) || !result.language || !result.timestamp) {
-                console.error('Invalid Response Structure:', result);
-                throw new Error('Invalid response structure from API');
-            }
-
-            this.addMessage(result.response, 'assistant', result.sources, this.attachedFile ? result.document_filename : null);
-
-        } catch (error) {
-<<<<<<< HEAD
             console.error('Chat error:', error);
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-            console.error('Chat error:', error.message, error.stack);
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-            this.addMessage(
-                'Sorry, there was an error processing your message. Please try again.',
-                'assistant'
-            );
-            this.updateStatus('Error', 'error');
+            this.addMessage('Sorry, there was an error. Please check the console and try again.', 'assistant');
         } finally {
             this.setLoading(false);
-<<<<<<< HEAD
-<<<<<<< HEAD
-            this.attachedFile = null;
-=======
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-            this.attachedFile = null;
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
         }
     }
 
     async callChatAPI(message) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-            const requestBody = {
-                message: message,
-                session_id: this.sessionId,
-                timestamp: new Date().toISOString()
-            };
-            console.log('Sending Request:', requestBody);
-
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                let errorData;
-                try {
-                    errorData = await response.json();
-                } catch {
-                    errorData = { detail: 'Failed to parse error response' };
-                }
-                console.error('API Error Response:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    errorData,
-                    responseText: await response.text()
-                });
-                throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            let result;
-            try {
-                result = await response.json();
-                console.log('Parsed API Response:', result);
-            } catch (e) {
-                console.error('Fetch Response Parsing Error:', e, 'Raw Response:', await response.text());
-                throw new Error('Failed to parse API response JSON');
-            }
-
-            return result;
-        } catch (error) {
-            console.error('Fetch error in callChatAPI:', error.message, error.stack);
-            throw error;
-        }
-    }
-
-    addMessage(content, sender, sources = [], documentFilename = null) {
-=======
         const response = await fetch('/api/chat', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-=======
-        try {
-            const requestBody = {
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-                message: message,
-                session_id: this.sessionId,
-                timestamp: new Date().toISOString()
-            };
-            console.log('Sending Request:', requestBody);
-
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                let errorData;
-                try {
-                    errorData = await response.json();
-                } catch {
-                    errorData = { detail: 'Failed to parse error response' };
-                }
-                console.error('API Error Response:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    errorData,
-                    responseText: await response.text()
-                });
-                throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            let result;
-            try {
-                result = await response.json();
-                console.log('Parsed API Response:', result);
-            } catch (e) {
-                console.error('Fetch Response Parsing Error:', e, 'Raw Response:', await response.text());
-                throw new Error('Failed to parse API response JSON');
-            }
-
-            return result;
-        } catch (error) {
-            console.error('Fetch error in callChatAPI:', error.message, error.stack);
-            throw error;
-        }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: message, session_id: this.sessionId })
+        });
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        return await response.json();
     }
 
     addMessage(content, sender, sources = [], documentFilename = null) {
         const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            welcomeMessage.remove();
-        }
+        if (welcomeMessage) welcomeMessage.remove();
 
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${sender}`;
@@ -395,12 +138,10 @@ class ChatInterface {
         
         if (sender === 'assistant') {
             messageContent.innerHTML = this.formatAssistantMessage(content);
-            messageDiv.setAttribute('data-sources', JSON.stringify(sources));
             this.addCitationHandlers(messageContent, sources);
         } else {
             messageContent.textContent = content;
         }
-
         messageDiv.appendChild(messageContent);
 
         if (documentFilename) {
@@ -410,75 +151,18 @@ class ChatInterface {
             messageDiv.appendChild(docInfo);
         }
 
-        if (sender === 'assistant' && sources && sources.length > 0) {
-            const sourcesDiv = document.createElement('div');
-            sourcesDiv.className = 'message-sources';
-            sourcesDiv.innerHTML = `<strong>Sources:</strong> ${sources.length} document(s) referenced`;
-            messageDiv.appendChild(sourcesDiv);
-        }
-
         this.chatMessages.appendChild(messageDiv);
         this.scrollToBottom();
     }
 
-<<<<<<< HEAD
-    addMessage(content, sender, sources = []) {
-<<<<<<< HEAD
-        // Remove welcome message if it exists
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-        const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            welcomeMessage.remove();
-        }
-
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
-
-        const messageContent = document.createElement('div');
-        messageContent.className = 'message-content';
-<<<<<<< HEAD
-        
-        if (sender === 'assistant') {
-            messageContent.innerHTML = this.formatAssistantMessage(content);
-            messageDiv.setAttribute('data-sources', JSON.stringify(sources));
-            this.addCitationHandlers(messageContent, sources);
-        } else {
-            messageContent.textContent = content;
-        }
-
-        messageDiv.appendChild(messageContent);
-
-        if (documentFilename) {
-            const docInfo = document.createElement('div');
-            docInfo.className = 'document-info';
-            docInfo.textContent = `Based on: ${documentFilename}`;
-            messageDiv.appendChild(docInfo);
-        }
-
-=======
-        messageContent.textContent = content;
-
-        messageDiv.appendChild(messageContent);
-
-        // Add sources if available (for assistant messages)
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-        if (sender === 'assistant' && sources && sources.length > 0) {
-            const sourcesDiv = document.createElement('div');
-            sourcesDiv.className = 'message-sources';
-            sourcesDiv.innerHTML = `<strong>Sources:</strong> ${sources.length} document(s) referenced`;
-            messageDiv.appendChild(sourcesDiv);
-        }
-
-        this.chatMessages.appendChild(messageDiv);
-        this.scrollToBottom();
+    formatAssistantMessage(content) {
+        let formattedContent = content.replace(/\[(\d+)\]/g, '<span class="citation" data-source="$1">[$1]</span>');
+        const paragraphs = formattedContent.split('\n').filter(p => p.trim());
+        return paragraphs.map(p => `<p>${p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`).join('');
     }
 
-<<<<<<< HEAD
-=======
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
     addCitationHandlers(messageContent, sources) {
-        const citations = messageContent.querySelectorAll('.citation');
-        citations.forEach(citation => {
+        messageContent.querySelectorAll('.citation').forEach(citation => {
             citation.addEventListener('click', (e) => {
                 e.preventDefault();
                 const sourceIndex = parseInt(citation.getAttribute('data-source')) - 1;
@@ -486,15 +170,11 @@ class ChatInterface {
                     this.showCitationPopup(sources[sourceIndex], citation);
                 }
             });
-<<<<<<< HEAD
         });
     }
 
     showCitationPopup(source, citationElement) {
-        const existingPopup = document.querySelector('.citation-popup');
-        if (existingPopup) {
-            existingPopup.remove();
-        }
+        document.querySelector('.citation-popup')?.remove(); // Close any existing popup
 
         const popup = document.createElement('div');
         popup.className = 'citation-popup';
@@ -502,127 +182,23 @@ class ChatInterface {
             <div class="citation-content">
                 <button class="citation-close">×</button>
                 <h4>${source.header || 'Source Reference'}</h4>
-                <div class="citation-text">${source.original_content || source.content || source.text || 'Source content not available'}</div>
+                <div class="citation-text">${source.original_content || 'Content not available.'}</div>
             </div>
         `;
-
         document.body.appendChild(popup);
 
         const rect = citationElement.getBoundingClientRect();
-        popup.style.top = (rect.bottom + window.scrollY + 10) + 'px';
-        popup.style.left = Math.max(10, rect.left + window.scrollX - 150) + 'px';
+        popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+        popup.style.left = `${rect.left + window.scrollX}px`;
 
         popup.querySelector('.citation-close').addEventListener('click', () => popup.remove());
-        popup.addEventListener('click', (e) => {
-            if (e.target === popup) popup.remove();
-        });
-    }
-
-    formatAssistantMessage(content) {
-        let formattedContent = content.replace(/\[(\d+)\]/g, '<span class="citation" data-source="$1">[$1]</span>');
-        const paragraphs = formattedContent.split('\n').filter(p => p.trim());
-        
-        return paragraphs.map(paragraph => {
-            paragraph = paragraph.trim();
-            paragraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            return `<p>${paragraph}</p>`;
-        }).join('');
-    }
-
-=======
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-    // Remove welcome message if it exists
-    const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
-    if (welcomeMessage) {
-        welcomeMessage.remove();
-    }
-
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${sender}`;
-
-    const messageContent = document.createElement('div');
-    messageContent.className = 'message-content';
-    
-    // Format the content for better readability
-    if (sender === 'assistant') {
-        messageContent.innerHTML = this.formatAssistantMessage(content);
-        // Store sources data for citation popups
-        messageDiv.setAttribute('data-sources', JSON.stringify(sources));
-        // Add click handlers for citations
-        this.addCitationHandlers(messageContent, sources);
-    } else {
-        messageContent.textContent = content;
-    }
-
-    messageDiv.appendChild(messageContent);
-
-    // Add sources if available (for assistant messages)
-    if (sender === 'assistant' && sources && sources.length > 0) {
-        const sourcesDiv = document.createElement('div');
-        sourcesDiv.className = 'message-sources';
-        sourcesDiv.innerHTML = `<strong>Sources:</strong> ${sources.length} document(s) referenced`;
-        messageDiv.appendChild(sourcesDiv);
-    }
-
-    this.chatMessages.appendChild(messageDiv);
-    this.scrollToBottom();
-}
-
-addCitationHandlers(messageContent, sources) {
-    const citations = messageContent.querySelectorAll('.citation');
-    citations.forEach(citation => {
-        citation.addEventListener('click', (e) => {
-            e.preventDefault();
-            const sourceIndex = parseInt(citation.getAttribute('data-source')) - 1;
-            if (sources && sources[sourceIndex]) {
-                this.showCitationPopup(sources[sourceIndex], citation);
+        document.addEventListener('click', (e) => {
+            if (!popup.contains(e.target) && e.target !== citationElement) {
+                popup.remove();
             }
-=======
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-        });
+        }, { once: true });
     }
 
-    showCitationPopup(source, citationElement) {
-        const existingPopup = document.querySelector('.citation-popup');
-        if (existingPopup) {
-            existingPopup.remove();
-        }
-
-        const popup = document.createElement('div');
-        popup.className = 'citation-popup';
-        popup.innerHTML = `
-            <div class="citation-content">
-                <button class="citation-close">×</button>
-                <h4>${source.header || 'Source Reference'}</h4>
-                <div class="citation-text">${source.original_content || source.content || source.text || 'Source content not available'}</div>
-            </div>
-        `;
-
-        document.body.appendChild(popup);
-
-        const rect = citationElement.getBoundingClientRect();
-        popup.style.top = (rect.bottom + window.scrollY + 10) + 'px';
-        popup.style.left = Math.max(10, rect.left + window.scrollX - 150) + 'px';
-
-        popup.querySelector('.citation-close').addEventListener('click', () => popup.remove());
-        popup.addEventListener('click', (e) => {
-            if (e.target === popup) popup.remove();
-        });
-    }
-
-    formatAssistantMessage(content) {
-        let formattedContent = content.replace(/\[(\d+)\]/g, '<span class="citation" data-source="$1">[$1]</span>');
-        const paragraphs = formattedContent.split('\n').filter(p => p.trim());
-        
-        return paragraphs.map(paragraph => {
-            paragraph = paragraph.trim();
-            paragraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            return `<p>${paragraph}</p>`;
-        }).join('');
-    }
-
->>>>>>> c4d328f (Response with clickable citations with popup previewsworking)
     scrollToBottom() {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
@@ -631,119 +207,27 @@ addCitationHandlers(messageContent, sources) {
         this.isLoading = loading;
         this.sendBtn.disabled = loading;
         this.messageInput.disabled = loading;
-
-        if (loading) {
-            this.sendBtn.innerHTML = '<div class="loading"></div>';
-            this.updateStatus('Processing...', 'processing');
-        } else {
-            this.sendBtn.textContent = 'Send';
-            this.updateStatus('Ready', 'ready');
-        }
-    }
-
-    updateStatus(text = 'Ready', type = 'ready') {
-        this.statusElement.textContent = text;
-<<<<<<< HEAD
-<<<<<<< HEAD
-        this.statusElement.className = '';
-        
-=======
-        
-        // Remove existing status classes
-        this.statusElement.className = '';
-        
-        // Add appropriate status class
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-        this.statusElement.className = '';
-        
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-        switch (type) {
-            case 'ready':
-                this.statusElement.style.background = '#48bb78';
-                break;
-            case 'processing':
-                this.statusElement.style.background = '#ed8936';
-                break;
-            case 'error':
-                this.statusElement.style.background = '#f56565';
-                break;
-            default:
-                this.statusElement.style.background = '#48bb78';
-        }
+        this.sendBtn.innerHTML = loading ? '<div class="loading"></div>' : 'Send';
     }
 
     async clearChat() {
         try {
-            const response = await fetch(`/api/chat/history/${this.sessionId}`, {
-                method: 'DELETE'
-            });
-
-            if (response.ok) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-                // Clear chat messages
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-                this.chatMessages.innerHTML = `
-                    <div class="welcome-message">
-                        <h2>Immigration Law Assistant</h2>
-                        <p>Ask me any questions about immigration processes and laws.</p>
-                        <p>You can ask questions in English or Spanish - I'll respond in the same language.</p>
-                        <div class="example-questions">
-                            <p><strong>Example questions:</strong></p>
-                            <ul>
-                                <li>"What documents do I need for permanent residency?"</li>
-                                <li>"¿Cuáles son los requisitos para la ciudadanía?"</li>
-                                <li>"How long does the visa process take?"</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-                this.updateStatus('Chat cleared', 'ready');
-            } else {
-                throw new Error('Failed to clear chat');
-            }
+            await fetch(`/api/chat/history/${this.sessionId}`, { method: 'DELETE' });
+            this.chatMessages.innerHTML = `
+                <div class="welcome-message">
+                    <h2>Immigration Law Assistant</h2>
+                    <p>Ask me questions about immigration law or upload a document to discuss.</p>
+                </div>`;
         } catch (error) {
             console.error('Clear chat error:', error);
-            this.updateStatus('Clear failed', 'error');
         }
     }
 
     async checkSystemHealth() {
-        try {
-            const response = await fetch('/health');
-            if (response.ok) {
-                this.updateStatus('Ready', 'ready');
-            } else {
-                this.updateStatus('System issues', 'error');
-            }
-        } catch (error) {
-            console.error('Health check failed:', error);
-            this.updateStatus('Connection error', 'error');
-        }
+        // Placeholder for a system health check if needed
     }
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 document.addEventListener('DOMContentLoaded', () => {
-    const chat = new ChatInterface();
-    chat.checkSystemHealth();
-=======
-// Initialize chat interface when DOM is loaded
-=======
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-document.addEventListener('DOMContentLoaded', () => {
-    const chat = new ChatInterface();
-    chat.checkSystemHealth();
-<<<<<<< HEAD
-    
-    // Focus on input field
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
->>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
-    chat.messageInput.focus();
+    new ChatInterface();
 });
