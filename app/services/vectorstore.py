@@ -53,6 +53,7 @@ class VectorStoreService:
                 "header": chunk.get("header", DEFAULT_HEADER_TEXT),
                 "questions": "|".join(chunk.get("questions", [])),  # Store questions as pipe-separated string
                 "original_content": chunk.get("original_content", chunk["content"])  # Store original content
+<<<<<<< HEAD
 =======
             ids = [f"doc_{i}" for i in range(len(chunks))]
 =======
@@ -70,6 +71,8 @@ class VectorStoreService:
                 "source": chunk.get("document_name", "unknown_source"),
                 "header": chunk.get("header", DEFAULT_HEADER_TEXT)
 >>>>>>> e1d6f52 (Improved chunking technique)
+=======
+>>>>>>> 2af9797 (Enhanced semantic meaning with questions)
             } for chunk in chunks]
             
             self.collection.add(

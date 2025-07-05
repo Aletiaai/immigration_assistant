@@ -32,6 +32,8 @@ from app.core.config import (
     DOCUMENT_AI_LIST_ITEM_TYPES, DOCUMENT_AI_FOOTER_TYPES, DOCUMENT_AI_TABLE_TYPES
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from app.services.llm_client import OllamaClient
+from app.core.prompts import get_question_generation_prompt
 import logging
 import re
 <<<<<<< HEAD
@@ -70,6 +72,9 @@ class DocumentProcessor:
             length_function=len
         )
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2af9797 (Enhanced semantic meaning with questions)
 
         # Initialize LLM client for question generation
         try:
@@ -79,10 +84,13 @@ class DocumentProcessor:
             logger.warning(f"--- DocumentProcessor: Failed to initialize LLM client: {str(e)}. Questions will be empty. ---")
             self.llm_client = None
 
+<<<<<<< HEAD
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 =======
 >>>>>>> e1d6f52 (Improved chunking technique)
+=======
+>>>>>>> 2af9797 (Enhanced semantic meaning with questions)
         logger.info("--- DocumentProcessor: Initialized successfully. ---")
 
     def process_pdf(self, file_path: str) -> List[Dict[str, str]]:
@@ -447,11 +455,11 @@ class DocumentProcessor:
             raise Exception(f"Document processing failed within DocumentProcessor: {str(e)}")
 
 
-    def _process_section_into_chunks(self, header_text: str, section_content_str: str, 
-                                     page_number: int, document_name: str, 
-                                     previous_chunks: List[Dict[str,str]]) -> List[Dict[str, str]]:
+    def _process_section_into_chunks(self, header_text: str, section_content_str: str,
+                                page_number: int, document_name: str,
+                                previous_chunks: List[Dict[str,str]]) -> List[Dict[str, str]]:
         new_chunks_for_section = []
-        
+    
         content_to_evaluate = section_content_str
         if header_text != DEFAULT_HEADER_TEXT and section_content_str.startswith(header_text):
             content_to_evaluate = section_content_str[len(header_text):].strip()
@@ -460,15 +468,30 @@ class DocumentProcessor:
             if previous_chunks and previous_chunks[-1]['page'] == str(page_number) and previous_chunks[-1]['header'] == header_text:
                 logger.debug(f"--- DocumentProcessor: Section under '{header_text}' too short. Merging with previous chunk. ---")
                 previous_chunks[-1]['content'] += "\n" + section_content_str.strip()
+                # Regenerate questions for merged content
+                try:
+                    questions = self._generate_questions_for_chunk(previous_chunks[-1]['content'])
+                    previous_chunks[-1]['questions'] = questions
+                except Exception as e:
+                    logger.error(f"--- DocumentProcessor: Error generating questions for merged chunk: {str(e)} ---")
+                    previous_chunks[-1]['questions'] = []
+                
                 if len(previous_chunks[-1]['content']) > CHUNK_SIZE:
                     logger.warning(f"--- DocumentProcessor: Merged chunk became too large ({len(previous_chunks[-1]['content'])} chars). Consider re-splitting. ---")
             elif header_text != DEFAULT_HEADER_TEXT:
-                 logger.debug(f"--- DocumentProcessor: Section under '{header_text}' is short but has a header. Keeping as one chunk. ---")
-                 new_chunks_for_section.append({
+                logger.debug(f"--- DocumentProcessor: Section under '{header_text}' is short but has a header. Keeping as one chunk. ---")
+                try:
+                    questions = self._generate_questions_for_chunk(section_content_str.strip())
+                except Exception as e:
+                    logger.error(f"--- DocumentProcessor: Error generating questions for short section: {str(e)} ---")
+                    questions = []
+                    
+                new_chunks_for_section.append({
                     "content": section_content_str.strip(),
                     "page": str(page_number),
                     "header": header_text,
-                    "document_name": document_name
+                    "document_name": document_name,
+                    "questions": questions
                 })
             else:
                 logger.debug(f"--- DocumentProcessor: Section under '{header_text}' too short and no distinct header. Discarding. ---")
@@ -478,30 +501,47 @@ class DocumentProcessor:
             logger.debug(f"--- DocumentProcessor: Section under '{header_text}' (len: {len(section_content_str)}) > CHUNK_SIZE ({CHUNK_SIZE}). Splitting. ---")
             split_texts = self.text_splitter.split_text(section_content_str)
             for i, part in enumerate(split_texts):
+                try:
+                    questions = self._generate_questions_for_chunk(part.strip())
+                except Exception as e:
+                    logger.error(f"--- DocumentProcessor: Error generating questions for split chunk {i+1}: {str(e)} ---")
+                    questions = []
+                    
                 new_chunks_for_section.append({
                     "content": part.strip(),
                     "page": str(page_number),
                     "header": header_text,
-                    "document_name": document_name
+                    "document_name": document_name,
+                    "questions": questions
                 })
-                logger.debug(f"--- DocumentProcessor: Added split chunk {i+1} for header '{header_text}'. Length: {len(part.strip())} ---")
+                logger.debug(f"--- DocumentProcessor: Added split chunk {i+1} for header '{header_text}'. Length: {len(part.strip())}, Questions: {len(questions)} ---")
         else:
+            try:
+                questions = self._generate_questions_for_chunk(section_content_str.strip())
+            except Exception as e:
+                logger.error(f"--- DocumentProcessor: Error generating questions for single chunk: {str(e)} ---")
+                questions = []
+                
             new_chunks_for_section.append({
                 "content": section_content_str.strip(),
                 "page": str(page_number),
                 "header": header_text,
-                "document_name": document_name
+                "document_name": document_name,
+                "questions": questions
             })
-            logger.debug(f"--- DocumentProcessor: Added section as one chunk for header '{header_text}'. Length: {len(section_content_str.strip())} ---")
-        
+            logger.debug(f"--- DocumentProcessor: Added section as one chunk for header '{header_text}'. Length: {len(section_content_str.strip())}, Questions: {len(questions)} ---")
+    
         return new_chunks_for_section
 
+<<<<<<< HEAD
 
 <<<<<<< HEAD
     def _get_text_from_layout(self, layout_proto: documentai.Document.Page.Layout, full_text: str) -> str:
         logger.debug(f"--- DocumentProcessor: Entering _get_text_from_layout ---")
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 =======
+=======
+>>>>>>> 2af9797 (Enhanced semantic meaning with questions)
     def _get_text_from_nested_blocks(self, nested_blocks_list: List['Document.Layout.Block']) -> str:
         """Helper to extract and join text from a list of nested blocks."""
         parts = []
@@ -599,6 +639,70 @@ class DocumentProcessor:
         logger.info(f"--- DocumentProcessor: Finished _extract_chunks_from_layout_parser, found {len(all_chunks)} chunks. ---")
         return all_chunks
 
+    def _generate_questions_for_chunk(self, content: str) -> List[str]:
+        """Generate common and uncommon questions for a chunk using LLM"""
+        try:
+            logger.debug("--- DocumentProcessor: Generating questions for chunk... ---")
+            
+            # Check if LLM client is available
+            if not self.llm_client:
+                logger.warning("--- DocumentProcessor: LLM client not available. Returning empty questions. ---")
+                return []
+            
+            # Skip question generation for very short content
+            if len(content.strip()) < 50:
+                logger.debug("--- DocumentProcessor: Content too short for question generation. ---")
+                return []
+            
+            # Detect language (simple detection)
+            spanish_words = ['el', 'la', 'es', 'de', 'que', 'y', 'en', 'un', 'una', 'con', 'por', 'para']
+            words = re.findall(r'\b\w+\b', content.lower())
+            if not words:
+                return []
+                
+            spanish_count = sum(1 for word in words if word in spanish_words)
+            language = "spanish" if spanish_count > len(words) * 0.15 else "english"
+            
+            # Get prompt template
+            prompt_template = get_question_generation_prompt(language)
+            # Limit content to avoid token limits while preserving context
+            content_for_prompt = content[:1500] if len(content) > 1500 else content
+            prompt = prompt_template.format(content=content_for_prompt)
+            
+            # Generate questions
+            response = self.llm_client.generate_response(prompt)
+            
+            # Parse questions from response
+            questions = self._parse_questions_from_response(response)
+            logger.debug(f"--- DocumentProcessor: Generated {len(questions)} questions for chunk. ---")
+            
+            return questions
+            
+        except Exception as e:
+            logger.error(f"--- DocumentProcessor: Error generating questions: {str(e)} ---", exc_info=True)
+            return []
+
+    def _parse_questions_from_response(self, response: str) -> List[str]:
+        """Parse questions from LLM response"""
+        try:
+            questions = []
+            lines = response.split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                # Look for numbered questions (1., 2., etc.)
+                if re.match(r'^\d+\.\s*', line):
+                    question = re.sub(r'^\d+\.\s*', '', line).strip()
+                    if question and not question.startswith('[') and not question.endswith(']'):
+                        questions.append(question)
+            
+            return questions[:10]  # Return max 10 questions
+            
+        except Exception as e:
+            logger.error(f"--- DocumentProcessor: Error parsing questions: {str(e)} ---")
+            return []
+    
+    
     # _get_text_from_layout is primarily for OCR processor output.
     def _get_text_from_layout(self, layout_proto: 'Document.Page.Layout', full_text: str) -> str:
         logger.debug(f"--- DocumentProcessor: Entering _get_text_from_layout. ---")

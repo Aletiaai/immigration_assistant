@@ -3,6 +3,7 @@ Centralized prompts for the RAG system
 """
 
 # Immigration law assistant prompts
+<<<<<<< HEAD
 IMMIGRATION_SYSTEM_PROMPT_EN = """
 You are a really kind immigration law assistant trained to provide accurate and helpful responses based only on the provided context documents.
 
@@ -59,12 +60,20 @@ Típicamente, las personas que ingresaron a EE. UU. sin inspección no son elegi
 Tu objetivo es asistir a los usuarios explicando con claridad los procedimientos migratorios, asegurando que las respuestas estén fundamentadas en el material de origen, pero puedes complementar con tu conocimiento cuando sea necesario.
 """
 
+=======
+IMMIGRATION_SYSTEM_PROMPT_EN = """You are an immigration law specialist assistant. Answer based only on the provided context.
+IMPORTANT: Include citations in your response using [number] format to reference the context sources."""
+
+IMMIGRATION_SYSTEM_PROMPT_ES = """Eres un asistente especializado en leyes de inmigración. Responde basándote únicamente en el contexto proporcionado.
+IMPORTANTE: Incluye citas en tu respuesta usando el formato [número] para referenciar las fuentes del contexto."""
+>>>>>>> 2af9797 (Enhanced semantic meaning with questions)
 
 # Template for building the full prompt
 PROMPT_TEMPLATE_EN = """{system_message}
 
 Context:
 {context}
+<<<<<<< HEAD
 ###########################
 The following is the chat history with this user:
 {chat_history}
@@ -72,12 +81,17 @@ The following is the chat history with this user:
 Current question: 
 {question}
 #########################
+=======
+
+{chat_history}Question: {question}
+>>>>>>> 2af9797 (Enhanced semantic meaning with questions)
 Answer:"""
 
 PROMPT_TEMPLATE_ES = """{system_message}
 
 Contexto:
 {context}
+<<<<<<< HEAD
 #########################
 Lo siguiente es la conversación historica con este usuario:
 {chat_history}
@@ -131,6 +145,19 @@ Content:
 ###############################
 Format your response as:
 
+=======
+
+{chat_history}Pregunta: {question}
+Respuesta:"""
+
+# Question generation prompts
+QUESTION_GENERATION_PROMPT_EN = """Based on the following text content, generate exactly 5 common questions and 5 uncommon questions that someone might ask about this content.
+
+Content:
+{content}
+
+Format your response as:
+>>>>>>> 2af9797 (Enhanced semantic meaning with questions)
 COMMON QUESTIONS:
 1. [question]
 2. [question]
@@ -143,6 +170,7 @@ UNCOMMON QUESTIONS:
 2. [question]
 3. [question]
 4. [question]
+<<<<<<< HEAD
 5. [question]
 """
 
@@ -190,6 +218,16 @@ Contenido:
 #####################################
 Formato de salida:
 
+=======
+5. [question]"""
+
+QUESTION_GENERATION_PROMPT_ES = """Basado en el siguiente contenido de texto, genera exactamente 5 preguntas comunes y 5 preguntas poco comunes que alguien podría hacer sobre este contenido.
+
+Contenido:
+{content}
+
+Formatea tu respuesta como:
+>>>>>>> 2af9797 (Enhanced semantic meaning with questions)
 PREGUNTAS COMUNES:
 1. [pregunta]
 2. [pregunta]
@@ -202,6 +240,7 @@ PREGUNTAS POCO COMUNES:
 2. [pregunta]
 3. [pregunta]
 4. [pregunta]
+<<<<<<< HEAD
 5. [pregunta]
 """
 
@@ -302,6 +341,9 @@ You are a helpful assistant. Read the following document and the user's question
 {question}<|eot_id|><|start_header_id|>user<|end_header_id|>
 {question}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 """
+=======
+5. [pregunta]"""
+>>>>>>> 2af9797 (Enhanced semantic meaning with questions)
 
 def get_system_prompt(language: str) -> str:
     """Get system prompt based on language"""
@@ -313,8 +355,12 @@ def get_prompt_template(language: str) -> str:
 
 def get_question_generation_prompt(language: str) -> str:
     """Get question generation prompt based on language"""
+<<<<<<< HEAD
     return QUESTION_GENERATION_PROMPT_ES if language == "spanish" else QUESTION_GENERATION_PROMPT_EN
 
 def get_document_processing_prompt(language: str) -> str:
     """Get prompt template for processing uploaded documents with user instructions"""
     return DOCUMENT_SPECIFIC_QUERY_ES if language == "spanish" else DOCUMENT_SPECIFIC_QUERY_EN
+=======
+    return QUESTION_GENERATION_PROMPT_ES if language == "spanish" else QUESTION_GENERATION_PROMPT_EN
+>>>>>>> 2af9797 (Enhanced semantic meaning with questions)
