@@ -246,6 +246,63 @@ Provide a clear, accurate, and well-structured response. If the information is n
 
 RESPONSE:"""
 
+
+QUERY_INTENT_PROMPT = """
+You are an **expert document analysis specialist** with a keen eye for detail and the ability to discern the scope of information needed to answer a query. Your task is to analyze a "User Question" and determine if it requires a comprehensive understanding of an entire document or if it can be answered by focusing on a small, specific section.
+
+**Guidelines for Analysis:**
+- If the question seeks a **summary, main points, a rewrite, the overall theme, purpose, or structure** of the document or something similar, categorize it as requiring the **entire document**.
+- If the question asks for a **specific detail, fact, name, date, or a targeted definition** or something similar, categorize it as answerable from a **small, targeted part** of the document.
+
+User Question: "{question}"
+
+Based on your expert analysis of the user's question, respond with ONLY ONE of the following two words: **HOLISTIC** or **SPECIFIC**.
+"""
+
+TOPIC_CHANGE_PROMPT = """
+You are an **expert linguistic analyst** specializing in conversational flow. Your task is to accurately determine if a "New Question" is a direct follow-up to, or related to, the "Previous Conversation," or if it introduces a completely new and unrelated topic.
+
+Previous Conversation:
+---
+{chat_history}
+---
+
+New Question: "{question}"
+
+Based on your analysis, is the "New Question" a follow-up question about the "Previous Conversation"? Respond with only one of the following two words: **FOLLOW-UP** or **NEW_TOPIC**.
+"""
+
+ROUTER_PROMPT = """
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You are a master router for a conversational AI agent. Your task is to classify the user's query into one of two categories based on the conversation history and the current query. The user may be asking a follow-up question about a document they previously uploaded.
+
+The categories are:
+1.  **DOCUMENT_HANDLER**: Use this if the user's query is a follow-up question or refers directly to the content of a previously uploaded document.
+2.  **GENERAL_KNOWLEDGE_BASE**: Use this if the user's query is on a new topic defferent too those in the document, a general question, or is unrelated to any previously discussed document.
+#######################
+Conversation History:
+{history}
+######################
+Current User Query: 
+"{query}"
+######################
+Based on the history and the current query, which category is the most appropriate? Respond with ONLY the category name: **DOCUMENT_HANDLER** or **GENERAL_KNOWLEDGE_BASE**.
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+{query}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+"""
+
+EXTRACTION_PROMPT_TEMPLATE = """
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+You are a helpful assistant. Read the following document and the user's question. Extract all paragraphs and sentences from the document that are relevant to answering the question. If no parts of the document are relevant, respond with 'No relevant information found.'
+
+--- Document ---
+{full_text}
+
+--- User's Question ---
+{question}<|eot_id|><|start_header_id|>user<|end_header_id|>
+{question}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+"""
+
 def get_system_prompt(language: str) -> str:
     """Get system prompt based on language"""
     return IMMIGRATION_SYSTEM_PROMPT_ES if language == "spanish" else IMMIGRATION_SYSTEM_PROMPT_EN

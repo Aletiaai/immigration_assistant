@@ -49,7 +49,7 @@ GOOGLE_PROCESSOR_ID = os.getenv("GOOGLE_PARSER_PROCESSOR_ID", "") #GOOGLE_PROCES
 
 # Chat settings
 MAX_MESSAGES_PER_SESSION = 10
-CONTEXT_HISTORY_MESSAGES = 5
+CONTEXT_HISTORY_MESSAGES = 6
 
 # Chunk settings
 MAX_CHUNKS_RETRIEVED = 3
@@ -60,6 +60,6 @@ ADMIN_PASSWORD_HASH = hashlib.sha256("admin123".encode()).hexdigest()
 TOKEN_EXPIRE_HOURS = 8
 
 # Admin Authentication
-ADMIN_PASSWORD = "your_secure_password_here"  # Change this!
-JWT_SECRET_KEY = "your-secret-key-here"  # Change this!
+ADMIN_PASSWORD = "your_secure_password_here"
+JWT_SECRET_KEY = "your-secret-key-here"
 JWT_EXPIRE_HOURS = 8

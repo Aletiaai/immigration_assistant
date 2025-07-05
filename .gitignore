@@ -30,3 +30,6 @@ Thumbs.db
 
 # Data base
 */data/
+*/raw/
+*/vectorestore/
+*/processed/

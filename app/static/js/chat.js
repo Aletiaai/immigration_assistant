@@ -68,7 +68,7 @@ class ChatInterface {
     }
 
     handleFile(file) {
-        if (file.type === 'application/pdf' || file.name.toLowerCase().endswith('.docx')) {
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.docx')) {
             this.attachedFile = file;
             this.fileNameSpan.textContent = `Attached: ${file.name}`;
         } else {
