@@ -12,9 +12,13 @@ from app.services.data_loader import DocumentProcessor
 from app.core.config import CONTEXT_HISTORY_MESSAGES, GOOGLE_PROJECT_ID, GOOGLE_LOCATION, GOOGLE_PROCESSOR_ID, MAX_CHUNKS_RETRIEVED
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 from app.core.prompts import get_system_prompt, get_prompt_template, LANGUAGE_DETECTION_PROMPT, QUERY_INTENT_PROMPT, TOPIC_CHANGE_PROMPT, ROUTER_PROMPT, EXTRACTION_PROMPT_TEMPLATE
 =======
 from app.core.prompts import get_system_prompt, get_prompt_template
+=======
+from app.core.prompts import get_system_prompt, get_prompt_template, LANGUAGE_DETECTION_PROMPT
+>>>>>>> c4d328f (Response with clickable citations with popup previewsworking)
 
 >>>>>>> 2af9797 (Enhanced semantic meaning with questions)
 import re
@@ -365,7 +369,18 @@ class RAGService:
     def _detect_language(self, text: str) -> str:
         try:
 <<<<<<< HEAD
+<<<<<<< HEAD
             # Use LLM to identify the language
+=======
+            # Use simple heuristic for very short texts
+            if len(text.strip()) < 10:
+                spanish_words = ['el', 'la', 'es', 'de', 'que', 'y', 'en', 'un', 'una', 'con', 'por', 'para']
+                words = re.findall(r'\b\w+\b', text.lower())
+                spanish_count = sum(1 for word in words if word in spanish_words)
+                return "spanish" if spanish_count > len(words) * 0.2 else "english"
+            
+            # Use LLM for longer texts
+>>>>>>> c4d328f (Response with clickable citations with popup previewsworking)
             prompt = LANGUAGE_DETECTION_PROMPT.format(text=text)
             
             response = self.llm_client.generate_response(prompt).strip().lower()
@@ -374,6 +389,7 @@ class RAGService:
             
         except Exception as e:
             logger.warning(f"Language detection failed: {str(e)}, defaulting to english")
+<<<<<<< HEAD
             return "english"
         
     def _build_context(self, search_results: List[Dict]) -> str:
@@ -504,6 +520,8 @@ class RAGService:
             spanish_count = sum(1 for word in words if word in spanish_words)
             return "spanish" if spanish_count > len(words) * 0.2 else "english"
         except:
+=======
+>>>>>>> c4d328f (Response with clickable citations with popup previewsworking)
             return "english"
     
     def _build_context(self, search_results: List[Dict]) -> str:

@@ -252,6 +252,9 @@ body {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c4d328f (Response with clickable citations with popup previewsworking)
 /* Enhanced message formatting */
 .message.assistant .message-content p {
     margin: 0 0 12px 0;
@@ -402,8 +405,11 @@ body {
     border-radius: 10px;
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> c4d328f (Response with clickable citations with popup previewsworking)
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
