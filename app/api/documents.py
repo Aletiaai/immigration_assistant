@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, status
 =======
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, status
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
 from typing import List
 from datetime import datetime
 import os
@@ -12,9 +16,13 @@ from app.services.rag_service import RAGService
 from app.core.config import DATA_DIR
 from app.core.dependencies import get_rag_service
 <<<<<<< HEAD
+<<<<<<< HEAD
 from app.core.auth import get_current_admin
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+from app.core.auth import get_current_admin
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
 import logging
 
 router = APIRouter()
@@ -26,10 +34,14 @@ RAW_DATA_DIR.mkdir(exist_ok=True)
 
 @router.post("/documents/upload", response_model=DocumentUpload)
 <<<<<<< HEAD
+<<<<<<< HEAD
 async def upload_document(file: UploadFile = File(...), service: RAGService = Depends(get_rag_service), admin: str = Depends(get_current_admin)):
 =======
 async def upload_document(file: UploadFile = File(...), service: RAGService = Depends(get_rag_service)):
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+async def upload_document(file: UploadFile = File(...), service: RAGService = Depends(get_rag_service), admin: str = Depends(get_current_admin)):
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
     logger.info(f"--- ENTERING API: /documents/upload for file: {file.filename if file else 'No file object'} ---")
 
     if not service: # Explicitly check if service is None
@@ -113,10 +125,14 @@ async def list_documents():
 
 @router.delete("/documents/{filename}")
 <<<<<<< HEAD
+<<<<<<< HEAD
 async def delete_document(filename: str, admin: str = Depends(get_current_admin)):
 =======
 async def delete_document(filename: str):
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+async def delete_document(filename: str, admin: str = Depends(get_current_admin)):
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
     try:
         file_path = RAW_DATA_DIR / filename
         
@@ -141,10 +157,14 @@ async def delete_document(filename: str):
 
 @router.get("/documents/status")
 <<<<<<< HEAD
+<<<<<<< HEAD
 async def get_vectorstore_status(service: RAGService = Depends(get_rag_service), admin: str = Depends(get_current_admin)):
 =======
 async def get_vectorstore_status(service: RAGService = Depends(get_rag_service)):
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+async def get_vectorstore_status(service: RAGService = Depends(get_rag_service), admin: str = Depends(get_current_admin)):
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
     try:
         count = service.vector_store.get_collection_count()
         

@@ -18,6 +18,7 @@ class ChatInterface {
         this.clearBtn = document.getElementById('clear-chat');
         this.statusElement = document.getElementById('status');
 <<<<<<< HEAD
+<<<<<<< HEAD
         this.adminBtn = document.getElementById('admin-btn');
         this.dropZone = document.getElementById('drop-zone');
         this.attachFileBtn = document.getElementById('attach-file-btn');
@@ -37,6 +38,9 @@ class ChatInterface {
                     return;
                 } else {
 =======
+=======
+        this.adminBtn = document.getElementById('admin-btn');
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
     }
 
     attachEventListeners() {
@@ -45,6 +49,11 @@ class ChatInterface {
         
         // Clear chat button
         this.clearBtn.addEventListener('click', () => this.clearChat());
+
+        // Admin button click
+        this.adminBtn.addEventListener('click', () => {
+            window.location.href = '/login';
+        });
         
         // Enter key handling
         this.messageInput.addEventListener('keydown', (e) => {

@@ -2,10 +2,15 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 <<<<<<< HEAD
+<<<<<<< HEAD
 import secrets
 import hashlib
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+import secrets
+import hashlib
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
 load_dotenv()
 
 # Project paths
@@ -80,4 +85,17 @@ CONTEXT_HISTORY_MESSAGES = 5
 
 # Chunk settings
 MAX_CHUNKS_RETRIEVED = 3
+<<<<<<< HEAD
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+
+# auth configuration 
+SECRET_KEY = secrets.token_urlsafe(32)  # Generate secure key
+ADMIN_PASSWORD_HASH = hashlib.sha256("admin123".encode()).hexdigest()
+TOKEN_EXPIRE_HOURS = 8
+
+# Admin Authentication
+ADMIN_PASSWORD = "your_secure_password_here"  # Change this!
+JWT_SECRET_KEY = "your-secret-key-here"  # Change this!
+JWT_EXPIRE_HOURS = 8
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)

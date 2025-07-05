@@ -1,5 +1,8 @@
 // Script for app/static/js/documents.js
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
 document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('admin_token');
 
@@ -34,9 +37,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function initializeDocumentManagement() {
+<<<<<<< HEAD
 =======
 document.addEventListener('DOMContentLoaded', () => {
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
     const fileInput = document.getElementById('file-input');
     const uploadBtn = document.getElementById('upload-btn');
     const uploadStatusEl = document.getElementById('upload-status');
@@ -57,10 +63,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!element) return;
         element.textContent = message;
 <<<<<<< HEAD
+<<<<<<< HEAD
         element.className = `status-message ${type}`;
 =======
         element.className = `status-message ${type}`; // Applies .success, .error, or .info
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+        element.className = `status-message ${type}`;
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
         element.style.display = 'block';
     }
 
@@ -82,19 +92,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
     // Add a smaller spinner style if not already in main CSS
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
     const styleSheet = document.createElement("style");
     styleSheet.innerText = `.spinner-small { border: 2px solid rgba(0,0,0,0.1); width: 16px; height: 16px; border-radius: 50%; border-left-color: #667eea; animation: spin 0.8s ease infinite; display: inline-block; vertical-align: middle; margin-right: 5px; }`;
     document.head.appendChild(styleSheet);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
     // --- Document Upload ---
     async function uploadDocument() {
         if (!fileInput.files || fileInput.files.length === 0) {
@@ -119,6 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: formData,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
                 }
@@ -130,14 +150,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+<<<<<<< HEAD
 =======
             });
 
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
             const result = await response.json();
 
             if (response.ok && result.status === 'processed') {
                 showStatusMessage(uploadStatusEl, `Success: ${result.message || 'Document uploaded and processed.'}`, 'success');
+<<<<<<< HEAD
 <<<<<<< HEAD
                 fileInput.value = '';
                 fetchDocumentList();
@@ -147,6 +171,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchDocumentList(); // Refresh list
                 fetchKbStatus(); // Refresh KB status
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+                fileInput.value = '';
+                fetchDocumentList();
+                fetchKbStatus();
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
             } else {
                 showStatusMessage(uploadStatusEl, `Error: ${result.message || 'Upload failed.'} (Status: ${result.status})`, 'error');
             }
@@ -163,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setLoading(refreshDocsBtn, true);
         listStatusEl.textContent = 'Loading documents...';
         listStatusEl.className = 'status-message info';
+<<<<<<< HEAD
 <<<<<<< HEAD
         documentListEl.innerHTML = '';
 
@@ -185,6 +215,23 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_BASE_URL}/list`);
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+        documentListEl.innerHTML = '';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/list`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                }
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem('admin_token');
+                window.location.href = '/login';
+                return;
+            }
+
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -232,15 +279,22 @@ document.addEventListener('DOMContentLoaded', () => {
     async function deleteDocument(filename, buttonElement) {
         setLoading(buttonElement, true);
 <<<<<<< HEAD
+<<<<<<< HEAD
         clearStatusMessage(listStatusEl);
 =======
         clearStatusMessage(listStatusEl); // Clear general list status before specific op
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+        clearStatusMessage(listStatusEl);
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
 
         try {
             const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(filename)}`, {
                 method: 'DELETE',
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
                 }
@@ -252,13 +306,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+<<<<<<< HEAD
 =======
             });
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
             const result = await response.json();
 
             if (response.ok) {
                 showStatusMessage(listStatusEl, `"${filename}" deleted successfully.`, 'success');
+<<<<<<< HEAD
 <<<<<<< HEAD
                 fetchDocumentList();
                 fetchKbStatus();
@@ -266,6 +324,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchDocumentList(); // Refresh the list
                 fetchKbStatus();   // Refresh KB status as deletion might affect it
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+                fetchDocumentList();
+                fetchKbStatus();
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
             } else {
                 showStatusMessage(listStatusEl, `Error deleting "${filename}": ${result.detail || 'Unknown error'}`, 'error');
             }
@@ -273,6 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Delete error:', error);
             showStatusMessage(listStatusEl, `Network or server error during deletion: ${error.message}`, 'error');
         } finally {
+<<<<<<< HEAD
 <<<<<<< HEAD
             // No need to reset loading state here as the list will refresh
         }
@@ -286,6 +349,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+            // No need to reset loading state here as the list will refresh
+        }
+    }
+
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
     // --- Knowledge Base Status ---
     async function fetchKbStatus() {
         setLoading(refreshKbStatusBtn, true);
@@ -295,6 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
             const response = await fetch(`${API_BASE_URL}/status`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
@@ -307,9 +379,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+<<<<<<< HEAD
 =======
             const response = await fetch(`${API_BASE_URL}/status`);
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -326,9 +401,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             showStatusMessage(kbStatusMessageEl, `Status as of ${new Date(data.timestamp).toLocaleString()}`, 'info');
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
         } catch (error) {
             console.error('Error fetching KB status:', error);
             kbChunksEl.textContent = 'Error';
@@ -348,7 +426,11 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchDocumentList();
     fetchKbStatus();
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
 =======
 });
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+}
+>>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
