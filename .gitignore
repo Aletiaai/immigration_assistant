@@ -33,6 +33,10 @@ Thumbs.db
 */data/
 */raw/
 */vectorestore/
+<<<<<<< HEAD
 */processed/
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+*/processed/
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)

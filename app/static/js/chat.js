@@ -115,10 +115,14 @@ class ChatInterface {
 
     handleFile(file) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.docx')) {
 =======
         if (file.type === 'application/pdf' || file.name.toLowerCase().endswith('.docx')) {
 >>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
+=======
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.docx')) {
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
             this.attachedFile = file;
             this.fileNameSpan.textContent = `Attached: ${file.name}`;
         } else {

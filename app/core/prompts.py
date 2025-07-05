@@ -480,6 +480,9 @@ Provide a clear, accurate, and well-structured response. If the information is n
 RESPONSE:"""
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 
 QUERY_INTENT_PROMPT = """
 You are an **expert document analysis specialist** with a keen eye for detail and the ability to discern the scope of information needed to answer a query. Your task is to analyze a "User Question" and determine if it requires a comprehensive understanding of an entire document or if it can be answered by focusing on a small, specific section.
@@ -536,6 +539,7 @@ You are a helpful assistant. Read the following document and the user's question
 {question}<|eot_id|><|start_header_id|>user<|end_header_id|>
 {question}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 """
+<<<<<<< HEAD
 =======
 5. [pregunta]"""
 >>>>>>> 2af9797 (Enhanced semantic meaning with questions)
@@ -552,6 +556,9 @@ Language:"""
 
 =======
 >>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
+=======
+
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 def get_system_prompt(language: str) -> str:
     """Get system prompt based on language"""
     return IMMIGRATION_SYSTEM_PROMPT_ES if language == "spanish" else IMMIGRATION_SYSTEM_PROMPT_EN

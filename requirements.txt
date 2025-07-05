@@ -1,7 +1,11 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 acres==0.5.0
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+acres==0.5.0
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 aiohappyeyeballs==2.6.1
 aiohttp==3.12.4
 aiosignal==1.3.2
@@ -20,6 +24,7 @@ cffi==1.17.1
 charset-normalizer==3.4.2
 chromadb==1.0.11
 ci-info==0.3.0
+<<<<<<< HEAD
 click==8.2.1
 coloredlogs==15.0.1
 configobj==5.0.9
@@ -36,6 +41,12 @@ coloredlogs==15.0.1
 <<<<<<< HEAD
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 =======
+=======
+click==8.2.1
+coloredlogs==15.0.1
+configobj==5.0.9
+configparser==7.2.0
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 cryptography==45.0.3
 >>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
 dataclasses-json==0.6.7
@@ -43,14 +54,20 @@ Deprecated==1.2.18
 distro==1.9.0
 durationpy==0.10
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 etelemetry==0.3.1
 fastapi==0.115.9
 filelock==3.13.1
 fitz==0.0.1.dev2
+<<<<<<< HEAD
 =======
 fastapi==0.115.9
 filelock==3.13.1
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 flatbuffers==25.2.10
 frozenlist==1.6.0
 fsspec==2024.6.1
@@ -68,9 +85,13 @@ h11==0.16.0
 hf-xet==1.1.2
 httpcore==1.0.9
 <<<<<<< HEAD
+<<<<<<< HEAD
 httplib2==0.22.0
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+httplib2==0.22.0
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 httptools==0.6.4
 httpx==0.28.1
 httpx-sse==0.4.0
@@ -104,6 +125,9 @@ langserve==0.3.1
 langsmith==0.3.43
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 looseversion==1.3.0
 lxml==5.4.0
 =======
@@ -121,10 +145,15 @@ multidict==6.4.4
 mypy_extensions==1.1.0
 networkx==3.3
 <<<<<<< HEAD
+<<<<<<< HEAD
 nibabel==5.3.2
 nipype==1.10.0
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+nibabel==5.3.2
+nipype==1.10.0
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 numpy==2.1.2
 nvidia-cublas-cu12==12.1.3.1
 nvidia-cuda-cupti-cu12==12.1.105
@@ -156,14 +185,19 @@ overrides==7.7.0
 packaging==24.2
 pandas==2.2.3
 <<<<<<< HEAD
+<<<<<<< HEAD
 pathlib==1.0.1
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+pathlib==1.0.1
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 pillow==11.0.0
 posthog==4.2.0
 propcache==0.3.1
 proto-plus==1.26.1
 protobuf==5.29.5
+<<<<<<< HEAD
 <<<<<<< HEAD
 prov==2.1.1
 puremagic==1.30
@@ -190,14 +224,21 @@ pyxnat==1.6.3
 PyYAML==6.0.2
 rdflib==7.1.4
 =======
+=======
+prov==2.1.1
+puremagic==1.30
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.22
 pydantic==2.11.5
 pydantic-settings==2.9.1
 pydantic_core==2.33.2
+pydot==4.0.1
 Pygments==2.19.1
 PyJWT==2.10.1
+PyMuPDF==1.26.3
+pyparsing==3.2.3
 PyPDF2==3.0.1
 PyPika==0.48.9
 pyproject_hooks==1.2.0
@@ -206,8 +247,13 @@ python-docx==1.1.2
 python-dotenv==1.1.0
 python-multipart==0.0.20
 pytz==2025.2
+pyxnat==1.6.3
 PyYAML==6.0.2
+<<<<<<< HEAD
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+rdflib==7.1.4
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 referencing==0.36.2
 regex==2024.11.6
 requests==2.32.3
@@ -223,9 +269,13 @@ sentence-transformers==4.1.0
 setuptools==70.2.0
 shellingham==1.5.4
 <<<<<<< HEAD
+<<<<<<< HEAD
 simplejson==3.20.1
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+simplejson==3.20.1
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 six==1.17.0
 smmap==5.0.2
 sniffio==1.3.1
@@ -242,9 +292,13 @@ torchaudio==2.5.1+cu121
 torchvision==0.20.1+cu121
 tqdm==4.67.1
 <<<<<<< HEAD
+<<<<<<< HEAD
 traits==7.0.2
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+traits==7.0.2
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
 transformers==4.52.3
 triton==3.1.0
 typer==0.16.0

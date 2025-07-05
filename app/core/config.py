@@ -72,6 +72,7 @@ TOKEN_EXPIRE_HOURS = 8
 # Admin Authentication
 ADMIN_PASSWORD = "your_secure_password_here"
 JWT_SECRET_KEY = "your-secret-key-here"
+<<<<<<< HEAD
 JWT_EXPIRE_HOURS = 8
 =======
 GOOGLE_PROCESSOR_ID = os.getenv("GOOGLE_PROCESSOR_ID", "") #GOOGLE_PROCESSOR_ID   GOOGLE_PARSER_PROCESSOR_ID
@@ -99,3 +100,6 @@ ADMIN_PASSWORD = "your_secure_password_here"  # Change this!
 JWT_SECRET_KEY = "your-secret-key-here"  # Change this!
 JWT_EXPIRE_HOURS = 8
 >>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
+=======
+JWT_EXPIRE_HOURS = 8
+>>>>>>> ea73ff7 (User-document querries processed locally and faster)
