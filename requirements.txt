@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 acres==0.5.0
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 aiohappyeyeballs==2.6.1
 aiohttp==3.12.4
 aiosignal==1.3.2
@@ -11,6 +14,7 @@ bcrypt==4.3.0
 build==1.2.2.post1
 cachetools==5.5.2
 certifi==2025.4.26
+<<<<<<< HEAD
 cffi==1.17.1
 charset-normalizer==3.4.2
 chromadb==1.0.11
@@ -20,14 +24,25 @@ coloredlogs==15.0.1
 configobj==5.0.9
 configparser==7.2.0
 cryptography==45.0.3
+=======
+charset-normalizer==3.4.2
+chromadb==1.0.11
+click==8.2.1
+coloredlogs==15.0.1
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 dataclasses-json==0.6.7
 Deprecated==1.2.18
 distro==1.9.0
 durationpy==0.10
+<<<<<<< HEAD
 etelemetry==0.3.1
 fastapi==0.115.9
 filelock==3.13.1
 fitz==0.0.1.dev2
+=======
+fastapi==0.115.9
+filelock==3.13.1
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 flatbuffers==25.2.10
 frozenlist==1.6.0
 fsspec==2024.6.1
@@ -44,7 +59,10 @@ grpcio-status==1.71.0
 h11==0.16.0
 hf-xet==1.1.2
 httpcore==1.0.9
+<<<<<<< HEAD
 httplib2==0.22.0
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 httptools==0.6.4
 httpx==0.28.1
 httpx-sse==0.4.0
@@ -59,7 +77,10 @@ jsonpatch==1.33
 jsonpointer==3.0.0
 jsonschema==4.24.0
 jsonschema-specifications==2025.4.1
+<<<<<<< HEAD
 jwt==1.3.1
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 kubernetes==32.0.1
 langchain==0.3.25
 langchain-cli==0.0.36
@@ -69,8 +90,11 @@ langchain-huggingface==0.2.0
 langchain-text-splitters==0.3.8
 langserve==0.3.1
 langsmith==0.3.43
+<<<<<<< HEAD
 looseversion==1.3.0
 lxml==5.4.0
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 markdown-it-py==3.0.0
 MarkupSafe==2.1.5
 marshmallow==3.26.1
@@ -80,8 +104,11 @@ mpmath==1.3.0
 multidict==6.4.4
 mypy_extensions==1.1.0
 networkx==3.3
+<<<<<<< HEAD
 nibabel==5.3.2
 nipype==1.10.0
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 numpy==2.1.2
 nvidia-cublas-cu12==12.1.3.1
 nvidia-cuda-cupti-cu12==12.1.105
@@ -112,12 +139,16 @@ orjson==3.10.18
 overrides==7.7.0
 packaging==24.2
 pandas==2.2.3
+<<<<<<< HEAD
 pathlib==1.0.1
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 pillow==11.0.0
 posthog==4.2.0
 propcache==0.3.1
 proto-plus==1.26.1
 protobuf==5.29.5
+<<<<<<< HEAD
 prov==2.1.1
 puremagic==1.30
 pyasn1==0.6.1
@@ -142,6 +173,21 @@ pytz==2025.2
 pyxnat==1.6.3
 PyYAML==6.0.2
 rdflib==7.1.4
+=======
+pyasn1==0.6.1
+pyasn1_modules==0.4.2
+pydantic==2.11.5
+pydantic-settings==2.9.1
+pydantic_core==2.33.2
+Pygments==2.19.1
+PyPika==0.48.9
+pyproject_hooks==1.2.0
+python-dateutil==2.9.0.post0
+python-dotenv==1.1.0
+python-multipart==0.0.20
+pytz==2025.2
+PyYAML==6.0.2
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 referencing==0.36.2
 regex==2024.11.6
 requests==2.32.3
@@ -156,7 +202,10 @@ scipy==1.15.3
 sentence-transformers==4.1.0
 setuptools==70.2.0
 shellingham==1.5.4
+<<<<<<< HEAD
 simplejson==3.20.1
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 six==1.17.0
 smmap==5.0.2
 sniffio==1.3.1
@@ -172,7 +221,10 @@ torch==2.5.1+cu121
 torchaudio==2.5.1+cu121
 torchvision==0.20.1+cu121
 tqdm==4.67.1
+<<<<<<< HEAD
 traits==7.0.2
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 transformers==4.52.3
 triton==3.1.0
 typer==0.16.0

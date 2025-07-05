@@ -1,8 +1,11 @@
 from pathlib import Path
 from dotenv import load_dotenv
 import os
+<<<<<<< HEAD
 import secrets
 import hashlib
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 load_dotenv()
 
 # Project paths
@@ -45,6 +48,7 @@ VECTORSTORE_DIR.mkdir(exist_ok=True)
 # Google Document AI settings (for online document processing)
 GOOGLE_PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID", "")
 GOOGLE_LOCATION = os.getenv("GOOGLE_LOCATION", "us")  # or "eu"
+<<<<<<< HEAD
 GOOGLE_PROCESSOR_ID = os.getenv("GOOGLE_PARSER_PROCESSOR_ID", "") #GOOGLE_PROCESSOR_ID   GOOGLE_PARSER_PROCESSOR_ID
 
 # Chat settings
@@ -63,3 +67,13 @@ TOKEN_EXPIRE_HOURS = 8
 ADMIN_PASSWORD = "your_secure_password_here"
 JWT_SECRET_KEY = "your-secret-key-here"
 JWT_EXPIRE_HOURS = 8
+=======
+GOOGLE_PROCESSOR_ID = os.getenv("GOOGLE_PROCESSOR_ID", "") #GOOGLE_PROCESSOR_ID   GOOGLE_PARSER_PROCESSOR_ID
+
+# Chat settings
+MAX_MESSAGES_PER_SESSION = 10
+CONTEXT_HISTORY_MESSAGES = 5
+
+# Chunk settings
+MAX_CHUNKS_RETRIEVED = 3
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)

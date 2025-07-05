@@ -1,4 +1,5 @@
 // Script for app/static/js/documents.js
+<<<<<<< HEAD
 document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('admin_token');
 
@@ -33,6 +34,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function initializeDocumentManagement() {
+=======
+document.addEventListener('DOMContentLoaded', () => {
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     const fileInput = document.getElementById('file-input');
     const uploadBtn = document.getElementById('upload-btn');
     const uploadStatusEl = document.getElementById('upload-status');
@@ -52,7 +56,11 @@ function initializeDocumentManagement() {
     function showStatusMessage(element, message, type = 'info') {
         if (!element) return;
         element.textContent = message;
+<<<<<<< HEAD
         element.className = `status-message ${type}`;
+=======
+        element.className = `status-message ${type}`; // Applies .success, .error, or .info
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
         element.style.display = 'block';
     }
 
@@ -73,11 +81,20 @@ function initializeDocumentManagement() {
             button.dataset.originalText = button.textContent;
         }
     }
+<<<<<<< HEAD
 
+=======
+    
+    // Add a smaller spinner style if not already in main CSS
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     const styleSheet = document.createElement("style");
     styleSheet.innerText = `.spinner-small { border: 2px solid rgba(0,0,0,0.1); width: 16px; height: 16px; border-radius: 50%; border-left-color: #667eea; animation: spin 0.8s ease infinite; display: inline-block; vertical-align: middle; margin-right: 5px; }`;
     document.head.appendChild(styleSheet);
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     // --- Document Upload ---
     async function uploadDocument() {
         if (!fileInput.files || fileInput.files.length === 0) {
@@ -101,6 +118,7 @@ function initializeDocumentManagement() {
             const response = await fetch(`${API_BASE_URL}/upload`, {
                 method: 'POST',
                 body: formData,
+<<<<<<< HEAD
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
                 }
@@ -112,13 +130,23 @@ function initializeDocumentManagement() {
                 return;
             }
 
+=======
+            });
+
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
             const result = await response.json();
 
             if (response.ok && result.status === 'processed') {
                 showStatusMessage(uploadStatusEl, `Success: ${result.message || 'Document uploaded and processed.'}`, 'success');
+<<<<<<< HEAD
                 fileInput.value = '';
                 fetchDocumentList();
                 fetchKbStatus();
+=======
+                fileInput.value = ''; // Clear file input
+                fetchDocumentList(); // Refresh list
+                fetchKbStatus(); // Refresh KB status
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
             } else {
                 showStatusMessage(uploadStatusEl, `Error: ${result.message || 'Upload failed.'} (Status: ${result.status})`, 'error');
             }
@@ -135,6 +163,7 @@ function initializeDocumentManagement() {
         setLoading(refreshDocsBtn, true);
         listStatusEl.textContent = 'Loading documents...';
         listStatusEl.className = 'status-message info';
+<<<<<<< HEAD
         documentListEl.innerHTML = '';
 
         try {
@@ -150,6 +179,12 @@ function initializeDocumentManagement() {
                 return;
             }
 
+=======
+        documentListEl.innerHTML = ''; // Clear current list
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/list`);
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -196,11 +231,16 @@ function initializeDocumentManagement() {
 
     async function deleteDocument(filename, buttonElement) {
         setLoading(buttonElement, true);
+<<<<<<< HEAD
         clearStatusMessage(listStatusEl);
+=======
+        clearStatusMessage(listStatusEl); // Clear general list status before specific op
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 
         try {
             const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(filename)}`, {
                 method: 'DELETE',
+<<<<<<< HEAD
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
                 }
@@ -212,12 +252,20 @@ function initializeDocumentManagement() {
                 return;
             }
 
+=======
+            });
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
             const result = await response.json();
 
             if (response.ok) {
                 showStatusMessage(listStatusEl, `"${filename}" deleted successfully.`, 'success');
+<<<<<<< HEAD
                 fetchDocumentList();
                 fetchKbStatus();
+=======
+                fetchDocumentList(); // Refresh the list
+                fetchKbStatus();   // Refresh KB status as deletion might affect it
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
             } else {
                 showStatusMessage(listStatusEl, `Error deleting "${filename}": ${result.detail || 'Unknown error'}`, 'error');
             }
@@ -225,10 +273,19 @@ function initializeDocumentManagement() {
             console.error('Delete error:', error);
             showStatusMessage(listStatusEl, `Network or server error during deletion: ${error.message}`, 'error');
         } finally {
+<<<<<<< HEAD
             // No need to reset loading state here as the list will refresh
         }
     }
 
+=======
+           // setLoading(buttonElement, false); // This is tricky because the button is removed on refresh
+           // No need to reset loading state here as the list will refresh and button will be gone or re-rendered.
+        }
+    }
+
+
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     // --- Knowledge Base Status ---
     async function fetchKbStatus() {
         setLoading(refreshKbStatusBtn, true);
@@ -237,6 +294,7 @@ function initializeDocumentManagement() {
         kbReadyStatusEl.textContent = 'Loading...';
 
         try {
+<<<<<<< HEAD
             const response = await fetch(`${API_BASE_URL}/status`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
@@ -249,6 +307,9 @@ function initializeDocumentManagement() {
                 return;
             }
 
+=======
+            const response = await fetch(`${API_BASE_URL}/status`);
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -264,6 +325,10 @@ function initializeDocumentManagement() {
                 kbReadyStatusEl.style.color = 'red';
             }
             showStatusMessage(kbStatusMessageEl, `Status as of ${new Date(data.timestamp).toLocaleString()}`, 'info');
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
         } catch (error) {
             console.error('Error fetching KB status:', error);
             kbChunksEl.textContent = 'Error';
@@ -282,4 +347,8 @@ function initializeDocumentManagement() {
     // --- Initial Load ---
     fetchDocumentList();
     fetchKbStatus();
+<<<<<<< HEAD
 }
+=======
+});
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)

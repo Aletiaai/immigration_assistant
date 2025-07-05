@@ -27,9 +27,12 @@ Thumbs.db
 
 # Environment variables
 .env
+<<<<<<< HEAD
 
 # Data base
 */data/
 */raw/
 */vectorestore/
 */processed/
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)

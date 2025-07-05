@@ -2,7 +2,10 @@ class ChatInterface {
     constructor() {
         this.sessionId = 'default';
         this.isLoading = false;
+<<<<<<< HEAD
         this.attachedFile = null;
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
         this.initializeElements();
         this.attachEventListeners();
         this.updateStatus();
@@ -14,6 +17,7 @@ class ChatInterface {
         this.sendBtn = document.getElementById('send-btn');
         this.clearBtn = document.getElementById('clear-chat');
         this.statusElement = document.getElementById('status');
+<<<<<<< HEAD
         this.adminBtn = document.getElementById('admin-btn');
         this.dropZone = document.getElementById('drop-zone');
         this.attachFileBtn = document.getElementById('attach-file-btn');
@@ -32,15 +36,40 @@ class ChatInterface {
                 if (e.shiftKey) {
                     return;
                 } else {
+=======
+    }
+
+    attachEventListeners() {
+        // Send button click
+        this.sendBtn.addEventListener('click', () => this.sendMessage());
+        
+        // Clear chat button
+        this.clearBtn.addEventListener('click', () => this.clearChat());
+        
+        // Enter key handling
+        this.messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (e.shiftKey) {
+                    // Allow new line with Shift+Enter
+                    return;
+                } else {
+                    // Send message with Enter
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
                     e.preventDefault();
                     this.sendMessage();
                 }
             }
         });
+<<<<<<< HEAD
+=======
+
+        // Auto-resize textarea
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
         this.messageInput.addEventListener('input', () => {
             this.messageInput.style.height = 'auto';
             this.messageInput.style.height = this.messageInput.scrollHeight + 'px';
         });
+<<<<<<< HEAD
         this.dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             this.dropZone.classList.add('dragover');
@@ -75,6 +104,8 @@ class ChatInterface {
             alert('Only PDF and DOCX files are supported.');
             this.fileInput.value = '';
         }
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     }
 
     async sendMessage() {
@@ -86,6 +117,7 @@ class ChatInterface {
 
         try {
             this.setLoading(true);
+<<<<<<< HEAD
             this.addMessage(message, 'user', [], this.attachedFile ? this.attachedFile.name : null);
             this.messageInput.value = '';
             this.messageInput.style.height = 'auto';
@@ -135,6 +167,17 @@ class ChatInterface {
 
         } catch (error) {
             console.error('Chat error:', error.message, error.stack);
+=======
+            this.addMessage(message, 'user');
+            this.messageInput.value = '';
+            this.messageInput.style.height = 'auto';
+
+            const response = await this.callChatAPI(message);
+            this.addMessage(response.response, 'assistant', response.sources);
+
+        } catch (error) {
+            console.error('Chat error:', error);
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
             this.addMessage(
                 'Sorry, there was an error processing your message. Please try again.',
                 'assistant'
@@ -142,11 +185,15 @@ class ChatInterface {
             this.updateStatus('Error', 'error');
         } finally {
             this.setLoading(false);
+<<<<<<< HEAD
             this.attachedFile = null;
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
         }
     }
 
     async callChatAPI(message) {
+<<<<<<< HEAD
         try {
             const requestBody = {
                 message: message,
@@ -196,6 +243,29 @@ class ChatInterface {
     }
 
     addMessage(content, sender, sources = [], documentFilename = null) {
+=======
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                timestamp: new Date().toISOString()
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || `HTTP ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    addMessage(content, sender, sources = []) {
+        // Remove welcome message if it exists
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
         const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
         if (welcomeMessage) {
             welcomeMessage.remove();
@@ -206,6 +276,7 @@ class ChatInterface {
 
         const messageContent = document.createElement('div');
         messageContent.className = 'message-content';
+<<<<<<< HEAD
         
         if (sender === 'assistant') {
             messageContent.innerHTML = this.formatAssistantMessage(content);
@@ -224,6 +295,13 @@ class ChatInterface {
             messageDiv.appendChild(docInfo);
         }
 
+=======
+        messageContent.textContent = content;
+
+        messageDiv.appendChild(messageContent);
+
+        // Add sources if available (for assistant messages)
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
         if (sender === 'assistant' && sources && sources.length > 0) {
             const sourcesDiv = document.createElement('div');
             sourcesDiv.className = 'message-sources';
@@ -235,6 +313,7 @@ class ChatInterface {
         this.scrollToBottom();
     }
 
+<<<<<<< HEAD
     addCitationHandlers(messageContent, sources) {
         const citations = messageContent.querySelectorAll('.citation');
         citations.forEach(citation => {
@@ -287,6 +366,8 @@ class ChatInterface {
         }).join('');
     }
 
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     scrollToBottom() {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
@@ -307,8 +388,16 @@ class ChatInterface {
 
     updateStatus(text = 'Ready', type = 'ready') {
         this.statusElement.textContent = text;
+<<<<<<< HEAD
         this.statusElement.className = '';
         
+=======
+        
+        // Remove existing status classes
+        this.statusElement.className = '';
+        
+        // Add appropriate status class
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
         switch (type) {
             case 'ready':
                 this.statusElement.style.background = '#48bb78';
@@ -331,6 +420,10 @@ class ChatInterface {
             });
 
             if (response.ok) {
+<<<<<<< HEAD
+=======
+                // Clear chat messages
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
                 this.chatMessages.innerHTML = `
                     <div class="welcome-message">
                         <h2>Immigration Law Assistant</h2>
@@ -371,8 +464,19 @@ class ChatInterface {
     }
 }
 
+<<<<<<< HEAD
 document.addEventListener('DOMContentLoaded', () => {
     const chat = new ChatInterface();
     chat.checkSystemHealth();
+=======
+// Initialize chat interface when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const chat = new ChatInterface();
+    
+    // Check system health on startup
+    chat.checkSystemHealth();
+    
+    // Focus on input field
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     chat.messageInput.focus();
 });

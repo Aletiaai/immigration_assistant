@@ -22,6 +22,7 @@ class DocumentUpload(BaseModel):
     filename: str
     status: str
     message: Optional[str] = None
+<<<<<<< HEAD
     timestamp: datetime
 
 class DocumentUploadMessage(BaseModel):
@@ -36,4 +37,6 @@ class DocumentProcessingResponse(BaseModel):
     processing_status: str
     sources: List[Dict[str, Any]] = []
     language: str
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     timestamp: datetime

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, status
+=======
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 from typing import List
 from datetime import datetime
 import os
@@ -7,7 +11,10 @@ from app.models.documents import DocumentUpload
 from app.services.rag_service import RAGService
 from app.core.config import DATA_DIR
 from app.core.dependencies import get_rag_service
+<<<<<<< HEAD
 from app.core.auth import get_current_admin
+=======
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
 import logging
 
 router = APIRouter()
@@ -18,7 +25,11 @@ RAW_DATA_DIR = DATA_DIR / "raw"
 RAW_DATA_DIR.mkdir(exist_ok=True)
 
 @router.post("/documents/upload", response_model=DocumentUpload)
+<<<<<<< HEAD
 async def upload_document(file: UploadFile = File(...), service: RAGService = Depends(get_rag_service), admin: str = Depends(get_current_admin)):
+=======
+async def upload_document(file: UploadFile = File(...), service: RAGService = Depends(get_rag_service)):
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     logger.info(f"--- ENTERING API: /documents/upload for file: {file.filename if file else 'No file object'} ---")
 
     if not service: # Explicitly check if service is None
@@ -101,7 +112,11 @@ async def list_documents():
         raise HTTPException(status_code=500, detail=f"Failed to list documents: {str(e)}")
 
 @router.delete("/documents/{filename}")
+<<<<<<< HEAD
 async def delete_document(filename: str, admin: str = Depends(get_current_admin)):
+=======
+async def delete_document(filename: str):
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     try:
         file_path = RAW_DATA_DIR / filename
         
@@ -125,7 +140,11 @@ async def delete_document(filename: str, admin: str = Depends(get_current_admin)
         raise HTTPException(status_code=500, detail=f"Failed to delete document: {str(e)}")
 
 @router.get("/documents/status")
+<<<<<<< HEAD
 async def get_vectorstore_status(service: RAGService = Depends(get_rag_service), admin: str = Depends(get_current_admin)):
+=======
+async def get_vectorstore_status(service: RAGService = Depends(get_rag_service)):
+>>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
     try:
         count = service.vector_store.get_collection_count()
         
