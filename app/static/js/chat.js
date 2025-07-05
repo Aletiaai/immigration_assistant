@@ -3,9 +3,13 @@ class ChatInterface {
         this.sessionId = 'default';
         this.isLoading = false;
 <<<<<<< HEAD
+<<<<<<< HEAD
         this.attachedFile = null;
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+        this.attachedFile = null;
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
         this.initializeElements();
         this.attachEventListeners();
         this.updateStatus();
@@ -24,6 +28,7 @@ class ChatInterface {
         this.attachFileBtn = document.getElementById('attach-file-btn');
         this.fileInput = document.getElementById('file-input');
         this.fileNameSpan = document.getElementById('file-name');
+<<<<<<< HEAD
     }
 
     attachEventListeners() {
@@ -41,44 +46,47 @@ class ChatInterface {
 =======
         this.adminBtn = document.getElementById('admin-btn');
 >>>>>>> 8b2611b (Admin login page created and integrated with the uploading documents process)
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
     }
 
     attachEventListeners() {
-        // Send button click
         this.sendBtn.addEventListener('click', () => this.sendMessage());
-        
-        // Clear chat button
         this.clearBtn.addEventListener('click', () => this.clearChat());
-
-        // Admin button click
         this.adminBtn.addEventListener('click', () => {
             window.location.href = '/login';
         });
-        
-        // Enter key handling
         this.messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 if (e.shiftKey) {
-                    // Allow new line with Shift+Enter
                     return;
                 } else {
+<<<<<<< HEAD
                     // Send message with Enter
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
                     e.preventDefault();
                     this.sendMessage();
                 }
             }
         });
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
         // Auto-resize textarea
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
         this.messageInput.addEventListener('input', () => {
             this.messageInput.style.height = 'auto';
             this.messageInput.style.height = this.messageInput.scrollHeight + 'px';
         });
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
         this.dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             this.dropZone.classList.add('dragover');
@@ -106,15 +114,22 @@ class ChatInterface {
     }
 
     handleFile(file) {
+<<<<<<< HEAD
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.docx')) {
+=======
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endswith('.docx')) {
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
             this.attachedFile = file;
             this.fileNameSpan.textContent = `Attached: ${file.name}`;
         } else {
             alert('Only PDF and DOCX files are supported.');
             this.fileInput.value = '';
         }
+<<<<<<< HEAD
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
     }
 
     async sendMessage() {
@@ -126,6 +141,7 @@ class ChatInterface {
 
         try {
             this.setLoading(true);
+<<<<<<< HEAD
 <<<<<<< HEAD
             this.addMessage(message, 'user', [], this.attachedFile ? this.attachedFile.name : null);
             this.messageInput.value = '';
@@ -178,15 +194,62 @@ class ChatInterface {
             console.error('Chat error:', error.message, error.stack);
 =======
             this.addMessage(message, 'user');
+=======
+            this.addMessage(message, 'user', [], this.attachedFile ? this.attachedFile.name : null);
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
             this.messageInput.value = '';
             this.messageInput.style.height = 'auto';
+            this.fileNameSpan.textContent = '';
+            this.fileInput.value = '';
 
-            const response = await this.callChatAPI(message);
-            this.addMessage(response.response, 'assistant', response.sources);
+            let result;
+            if (this.attachedFile) {
+                const formData = new FormData();
+                formData.append('file', this.attachedFile);
+                formData.append('message', message);
+                formData.append('session_id', this.sessionId);
+                formData.append('instructions', '');
+                const response = await fetch('/api/chat/document', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch {
+                        errorData = { detail: 'Failed to parse error response' };
+                    }
+                    console.error('API Error Response:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        errorData,
+                        responseText: await response.text()
+                    });
+                    throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+                }
+                result = await response.json();
+                console.log('Parsed API Response (Document):', result);
+            } else {
+                result = await this.callChatAPI(message);
+                console.log('Parsed API Response (Text):', result);
+            }
+
+            // Validate response structure
+            if (!result.response || !Array.isArray(result.sources) || !result.language || !result.timestamp) {
+                console.error('Invalid Response Structure:', result);
+                throw new Error('Invalid response structure from API');
+            }
+
+            this.addMessage(result.response, 'assistant', result.sources, this.attachedFile ? result.document_filename : null);
 
         } catch (error) {
+<<<<<<< HEAD
             console.error('Chat error:', error);
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+            console.error('Chat error:', error.message, error.stack);
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
             this.addMessage(
                 'Sorry, there was an error processing your message. Please try again.',
                 'assistant'
@@ -195,13 +258,18 @@ class ChatInterface {
         } finally {
             this.setLoading(false);
 <<<<<<< HEAD
+<<<<<<< HEAD
             this.attachedFile = null;
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+            this.attachedFile = null;
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
         }
     }
 
     async callChatAPI(message) {
+<<<<<<< HEAD
 <<<<<<< HEAD
         try {
             const requestBody = {
@@ -259,21 +327,97 @@ class ChatInterface {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+=======
+        try {
+            const requestBody = {
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
                 message: message,
+                session_id: this.sessionId,
                 timestamp: new Date().toISOString()
-            })
-        });
+            };
+            console.log('Sending Request:', requestBody);
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.detail || `HTTP ${response.status}`);
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch {
+                    errorData = { detail: 'Failed to parse error response' };
+                }
+                console.error('API Error Response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorData,
+                    responseText: await response.text()
+                });
+                throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            let result;
+            try {
+                result = await response.json();
+                console.log('Parsed API Response:', result);
+            } catch (e) {
+                console.error('Fetch Response Parsing Error:', e, 'Raw Response:', await response.text());
+                throw new Error('Failed to parse API response JSON');
+            }
+
+            return result;
+        } catch (error) {
+            console.error('Fetch error in callChatAPI:', error.message, error.stack);
+            throw error;
         }
-
-        const result = await response.json();
-        console.log('API Response:', result); // Debug line
-        return result;
     }
 
+    addMessage(content, sender, sources = [], documentFilename = null) {
+        const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
+        if (welcomeMessage) {
+            welcomeMessage.remove();
+        }
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message-content';
+        
+        if (sender === 'assistant') {
+            messageContent.innerHTML = this.formatAssistantMessage(content);
+            messageDiv.setAttribute('data-sources', JSON.stringify(sources));
+            this.addCitationHandlers(messageContent, sources);
+        } else {
+            messageContent.textContent = content;
+        }
+
+        messageDiv.appendChild(messageContent);
+
+        if (documentFilename) {
+            const docInfo = document.createElement('div');
+            docInfo.className = 'document-info';
+            docInfo.textContent = `Based on: ${documentFilename}`;
+            messageDiv.appendChild(docInfo);
+        }
+
+        if (sender === 'assistant' && sources && sources.length > 0) {
+            const sourcesDiv = document.createElement('div');
+            sourcesDiv.className = 'message-sources';
+            sourcesDiv.innerHTML = `<strong>Sources:</strong> ${sources.length} document(s) referenced`;
+            messageDiv.appendChild(sourcesDiv);
+        }
+
+        this.chatMessages.appendChild(messageDiv);
+        this.scrollToBottom();
+    }
+
+<<<<<<< HEAD
     addMessage(content, sender, sources = []) {
 <<<<<<< HEAD
         // Remove welcome message if it exists
@@ -326,6 +470,8 @@ class ChatInterface {
     }
 
 <<<<<<< HEAD
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
     addCitationHandlers(messageContent, sources) {
         const citations = messageContent.querySelectorAll('.citation');
         citations.forEach(citation => {
@@ -336,6 +482,7 @@ class ChatInterface {
                     this.showCitationPopup(sources[sourceIndex], citation);
                 }
             });
+<<<<<<< HEAD
         });
     }
 
@@ -427,61 +574,49 @@ addCitationHandlers(messageContent, sources) {
             if (sources && sources[sourceIndex]) {
                 this.showCitationPopup(sources[sourceIndex], citation);
             }
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
         });
-    });
-}
-
-showCitationPopup(source, citationElement) {
-    // Remove existing popup
-    const existingPopup = document.querySelector('.citation-popup');
-    if (existingPopup) {
-        existingPopup.remove();
     }
 
-    // Create popup
-    const popup = document.createElement('div');
-    popup.className = 'citation-popup';
-    popup.innerHTML = `
-        <div class="citation-content">
-            <button class="citation-close">&times;</button>
-            <h4>${source.header || 'Source Reference'}</h4>
-            <div class="citation-text">${source.original_content || source.content || source.text || 'Source content not available'}</div>
-        </div>
-    `;
+    showCitationPopup(source, citationElement) {
+        const existingPopup = document.querySelector('.citation-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
 
-    document.body.appendChild(popup);
+        const popup = document.createElement('div');
+        popup.className = 'citation-popup';
+        popup.innerHTML = `
+            <div class="citation-content">
+                <button class="citation-close">×</button>
+                <h4>${source.header || 'Source Reference'}</h4>
+                <div class="citation-text">${source.original_content || source.content || source.text || 'Source content not available'}</div>
+            </div>
+        `;
 
-    // Position popup near citation
-    const rect = citationElement.getBoundingClientRect();
-    popup.style.top = (rect.bottom + window.scrollY + 10) + 'px';
-    popup.style.left = Math.max(10, rect.left + window.scrollX - 150) + 'px';
+        document.body.appendChild(popup);
 
-    // Close handlers
-    popup.querySelector('.citation-close').addEventListener('click', () => popup.remove());
-    popup.addEventListener('click', (e) => {
-        if (e.target === popup) popup.remove();
-    });
-}
+        const rect = citationElement.getBoundingClientRect();
+        popup.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+        popup.style.left = Math.max(10, rect.left + window.scrollX - 150) + 'px';
 
-formatAssistantMessage(content) {
-    // Replace citation patterns [1], [2], etc. with clickable spans
-    let formattedContent = content.replace(/\[(\d+)\]/g, '<span class="citation" data-source="$1">[$1]</span>');
-    
-    // Split on single line breaks and filter empty lines
-    const paragraphs = formattedContent.split('\n').filter(p => p.trim());
-    
-    return paragraphs.map(paragraph => {
-        paragraph = paragraph.trim();
+        popup.querySelector('.citation-close').addEventListener('click', () => popup.remove());
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) popup.remove();
+        });
+    }
+
+    formatAssistantMessage(content) {
+        let formattedContent = content.replace(/\[(\d+)\]/g, '<span class="citation" data-source="$1">[$1]</span>');
+        const paragraphs = formattedContent.split('\n').filter(p => p.trim());
         
-        // Handle bold text (**text**)
-        paragraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Return as paragraph with proper spacing
-        return `<p>${paragraph}</p>`;
-    }).join('');
-}
-
-
+        return paragraphs.map(paragraph => {
+            paragraph = paragraph.trim();
+            paragraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            return `<p>${paragraph}</p>`;
+        }).join('');
+    }
 
 >>>>>>> c4d328f (Response with clickable citations with popup previewsworking)
     scrollToBottom() {
@@ -505,6 +640,7 @@ formatAssistantMessage(content) {
     updateStatus(text = 'Ready', type = 'ready') {
         this.statusElement.textContent = text;
 <<<<<<< HEAD
+<<<<<<< HEAD
         this.statusElement.className = '';
         
 =======
@@ -514,6 +650,10 @@ formatAssistantMessage(content) {
         
         // Add appropriate status class
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+        this.statusElement.className = '';
+        
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
         switch (type) {
             case 'ready':
                 this.statusElement.style.background = '#48bb78';
@@ -537,9 +677,12 @@ formatAssistantMessage(content) {
 
             if (response.ok) {
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                 // Clear chat messages
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
                 this.chatMessages.innerHTML = `
                     <div class="welcome-message">
                         <h2>Immigration Law Assistant</h2>
@@ -581,18 +724,22 @@ formatAssistantMessage(content) {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 document.addEventListener('DOMContentLoaded', () => {
     const chat = new ChatInterface();
     chat.checkSystemHealth();
 =======
 // Initialize chat interface when DOM is loaded
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
 document.addEventListener('DOMContentLoaded', () => {
     const chat = new ChatInterface();
-    
-    // Check system health on startup
     chat.checkSystemHealth();
+<<<<<<< HEAD
     
     // Focus on input field
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
     chat.messageInput.focus();
 });

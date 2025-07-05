@@ -23,6 +23,9 @@ class DocumentUpload(BaseModel):
     status: str
     message: Optional[str] = None
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
     timestamp: datetime
 
 class DocumentUploadMessage(BaseModel):
@@ -37,6 +40,9 @@ class DocumentProcessingResponse(BaseModel):
     processing_status: str
     sources: List[Dict[str, Any]] = []
     language: str
+<<<<<<< HEAD
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
     timestamp: datetime

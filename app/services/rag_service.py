@@ -1,15 +1,20 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # app/services/rag_service.py
 
 from typing import Any, List, Dict
 =======
 from typing import List, Dict, Optional
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+from typing import Any, List, Dict, Optional
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
 from app.services.llm_client import OllamaClient
 from app.services.embeddings import EmbeddingService
 from app.services.vectorstore import VectorStoreService
 from app.services.data_loader import DocumentProcessor
 from app.core.config import CONTEXT_HISTORY_MESSAGES, GOOGLE_PROJECT_ID, GOOGLE_LOCATION, GOOGLE_PROCESSOR_ID, MAX_CHUNKS_RETRIEVED
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -19,6 +24,9 @@ from app.core.prompts import get_system_prompt, get_prompt_template
 =======
 from app.core.prompts import get_system_prompt, get_prompt_template, LANGUAGE_DETECTION_PROMPT
 >>>>>>> c4d328f (Response with clickable citations with popup previewsworking)
+=======
+from app.core.prompts import get_system_prompt, get_prompt_template, LANGUAGE_DETECTION_PROMPT, get_document_processing_prompt
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
 
 >>>>>>> 2af9797 (Enhanced semantic meaning with questions)
 import re
@@ -28,6 +36,8 @@ import numpy as np
 import re
 import logging
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+
+import numpy as np
 
 logger = logging.getLogger(__name__) 
 
@@ -583,4 +593,51 @@ class RAGService:
             return "\n".join(history_parts)
         except Exception as e:
             return ""
+<<<<<<< HEAD
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+        
+    def process_document_temporarily(self, file_path: str, original_filename: str, user_message: str, instructions: str = "") -> Dict[str, Any]:
+        """Process document temporarily for one-time use without adding to knowledge base"""
+        try:
+            logger.info(f"--- RAGService: Processing document temporarily: {file_path} ---")
+
+            # Process document based on file type
+            if original_filename.lower().endswith('.pdf'):
+                full_text = self.doc_processor.extract_text_from_pdf(file_path)
+                logger.debug(f"Este es el contenido del archivo PDF: {full_text}")
+            elif original_filename.lower().endswith('.docx'):
+                full_text = self.doc_processor.extract_text_from_docx(file_path)
+            else:
+                raise ValueError("Unsupported file type")
+
+            if not full_text:
+                raise Exception("No content extracted from document")
+            
+            # Create special prompt for document processing
+            context = full_text
+
+            # Detect language and get appropriate prompt
+            language = self._detect_language(user_message)
+
+            prompt = get_document_processing_prompt(language)
+    
+            prompt_tamplate = prompt.format(
+                context = context,
+                user_message = user_message,
+                instructions = instructions if instructions else "None provided"
+            )
+
+            # Generate response
+            response = self.llm_client.generate_response(prompt_tamplate)
+            
+            return {
+            "response": response,
+            "sources": [{"content": full_text[:200] + "...", "page": "N/A"}],
+            "language": language
+        }
+            
+        except Exception as e:
+            logger.error(f"--- RAGService: Error in temporary document processing: {str(e)} ---")
+            raise Exception(f"Temporary document processing failed: {str(e)}")
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)

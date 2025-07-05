@@ -420,6 +420,9 @@ body {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
 /* Drop zone styling */
 .drop-zone {
     padding: 15px;
@@ -461,8 +464,11 @@ body {
     font-style: italic;
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
 /* Responsive design */
 @media (max-width: 768px) {
     .container {
@@ -505,14 +511,20 @@ body {
         width: 100%;
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
     
     .file-input-container {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
+<<<<<<< HEAD
 =======
 >>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
 }
 
 /* Custom scrollbar */

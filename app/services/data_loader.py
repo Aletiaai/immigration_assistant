@@ -20,6 +20,7 @@ from PyPDF2 import PdfReader
 from docx import Document
 
 
+<<<<<<< HEAD
 =======
 =======
 from google.cloud.documentai_v1.types import Document
@@ -41,6 +42,8 @@ import re
 =======
 import os
 >>>>>>> e1d6f52 (Improved chunking technique)
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
 
 logger = logging.getLogger(__name__)
 
@@ -302,6 +305,7 @@ class DocumentProcessor:
         all_chunks = []
         
         doc_layout: 'Document.DocumentLayout' = document_proto_obj.document_layout  # Type hint
+<<<<<<< HEAD
         if not doc_layout or not doc_layout.blocks:
             logger.warning("--- DocumentProcessor: No document_layout or blocks found in Document AI response. ---")
             return all_chunks
@@ -562,6 +566,8 @@ class DocumentProcessor:
         all_chunks = []
         
         doc_layout: 'Document.DocumentLayout' = document_proto_obj.document_layout # Type hint
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
         if not doc_layout or not doc_layout.blocks:
             logger.warning("--- DocumentProcessor: No document_layout or blocks found in Document AI response. ---")
             return all_chunks
@@ -570,11 +576,12 @@ class DocumentProcessor:
         current_section_content_parts = []
         current_section_page_start = 1
 
-        for block_data in doc_layout.blocks: # block_data is Document.Layout.Block
-            text_block: 'Document.Layout.TextBlock' = block_data.text_block # Type hint
+        for block_data in doc_layout.blocks:  # block_data is Document.Layout.Block
+            text_block: 'Document.Layout.TextBlock' = block_data.text_block  # Type hint
             block_type = text_block.type
             block_text_header_only = text_block.text.strip() if text_block.text else ""
-            page_start = block_data.page_span.page_start if hasattr(block_data, 'page_span') and block_data.page_span else 1
+            # Get page number from pageSpan
+            page_start = block_data.page_span.page_start if hasattr(block_data, 'page_span') and block_data.page_span and block_data.page_span.page_start else 1
 
             if not block_text_header_only and not (hasattr(text_block, 'blocks') and text_block.blocks):
                 continue
@@ -596,23 +603,23 @@ class DocumentProcessor:
                     section_text_str = "\n".join(current_section_content_parts).strip()
                     if section_text_str:
                         processed_chunks = self._process_section_into_chunks(
-                            current_header_text, section_text_str, current_section_page_start, 
-                            document_name, all_chunks 
+                            current_header_text, section_text_str, current_section_page_start,
+                            document_name, all_chunks
                         )
                         all_chunks.extend(processed_chunks)
                 
                 current_header_text = block_text_header_only
-                current_section_content_parts = [block_text_header_only] 
+                current_section_content_parts = [block_text_header_only]
                 current_section_page_start = page_start
                 logger.debug(f"--- DocumentProcessor: New header found: '{current_header_text}', page: {page_start}. ---")
 
                 if hasattr(text_block, 'blocks') and text_block.blocks:
-                    nested_text = self._get_text_from_nested_blocks(text_block.blocks) 
+                    nested_text = self._get_text_from_nested_blocks(text_block.blocks)
                     if nested_text:
                         current_section_content_parts.append(nested_text)
                         logger.debug(f"--- DocumentProcessor: Appended nested block text to header '{current_header_text}'. ---")
             
-            else: 
+            else:
                 if block_text_header_only:
                     if not current_section_content_parts:
                         current_section_page_start = page_start
@@ -623,7 +630,7 @@ class DocumentProcessor:
                     nested_text = self._get_text_from_nested_blocks(text_block.blocks)
                     if nested_text:
                         if not current_section_content_parts:
-                             current_section_page_start = page_start
+                            current_section_page_start = page_start
                         current_section_content_parts.append(nested_text)
                         logger.debug(f"--- DocumentProcessor: Appended nested block text to non-header section '{current_header_text}'. ---")
         
@@ -631,7 +638,7 @@ class DocumentProcessor:
             section_text_str = "\n".join(current_section_content_parts).strip()
             if section_text_str:
                 processed_chunks = self._process_section_into_chunks(
-                    current_header_text, section_text_str, current_section_page_start, 
+                    current_header_text, section_text_str, current_section_page_start,
                     document_name, all_chunks
                 )
                 all_chunks.extend(processed_chunks)
@@ -739,6 +746,9 @@ class DocumentProcessor:
             logger.error(f"--- DocumentProcessor: Error in _get_text_from_layout: {str(e)} ---", exc_info=True)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
             raise Exception(f"Text extraction from layout failed: {str(e)}")
 
     def extract_text_from_docx(self, file_path: str) -> str:
@@ -784,6 +794,7 @@ class DocumentProcessor:
 
         except Exception as e:
             logger.error(f"--- DocProcessor: Error extracting text from PDF {file_path}: {str(e)} ---", exc_info=True)
+<<<<<<< HEAD
             raise Exception(f"PDF text extraction failed: {str(e)}")
 =======
             # Re-raise to be caught by _extract_chunks
@@ -792,3 +803,6 @@ class DocumentProcessor:
 =======
             raise Exception(f"Text extraction from layout failed: {str(e)}")
 >>>>>>> e1d6f52 (Improved chunking technique)
+=======
+            raise Exception(f"PDF text extraction failed: {str(e)}")
+>>>>>>> 9ea43c2 (Extracting text easily from document provided and answer only 1 question about the document)
