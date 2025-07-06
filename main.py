@@ -1,39 +1,67 @@
-#!/usr/bin/env python3
+#main.py
+
 import sys
 import uvicorn
+import subprocess
+import logging
 from pathlib import Path
 
-# Add project root to Python path
+# --- Setup Project Path ---
+# This ensures that the 'app' module can be found
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-try:
-    from app.core.config import HOST, PORT, API_TITLE
-    from app.main import app
-except ImportError as e:
-    print(f"Failed to import application modules: {str(e)}")
-    print("Make sure all dependencies are installed and the project structure is correct.")
-    sys.exit(1)
+# --- Configure Logging ---
+# A single logging configuration for the entire application startup
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
+# --- Main Application ---
 def main():
-    """Main entry point for the RAG chat system"""
+    """
+    Main entry point for starting the RAG chat system.
+    Handles dynamic host detection and robust error handling.
+    """
     try:
-        print(f"Starting {API_TITLE}...")
-        print(f"Server will be available at: http://{HOST}:{PORT}")
-        print("Press Ctrl+C to stop the server")
-        
+        # Import configuration after path setup
+        from app.core.config import HOST, PORT, API_TITLE
+        from app.main import app
+    except ImportError as e:
+        logger.critical(f"Failed to import application modules: {e}")
+        logger.critical("Please ensure all dependencies are installed from requirements.txt")
+        sys.exit(1)
+
+    # --- Host Detection ---
+    # Try to get the Tailscale IP, but fall back gracefully
+    run_host = HOST
+    try:
+        tailscale_ip = subprocess.check_output(['tailscale', 'ip', '-4'], text=True).strip()
+        if tailscale_ip:
+            run_host = tailscale_ip
+            logger.info(f"Tailscale IP detected. Using {run_host} as host.")
+    except (FileNotFoundError, subprocess.CalledProcessError) as e:
+        logger.warning(f"Tailscale command not found or failed: {e}. Falling back to default host: {HOST}")
+        run_host = HOST
+
+    # --- Server Startup ---
+    try:
+        logger.info(f"Starting {API_TITLE} server...")
+        logger.info(f"Access the application at: http://{run_host}:{PORT}")
+        logger.info("Press Ctrl+C to stop the server.")
+
         uvicorn.run(
-            app,
-            host=HOST,
+            "app.main:app",
+            host=run_host,
             port=PORT,
             reload=True,
             log_level="info",
             access_log=True
         )
-    except KeyboardInterrupt:
-        print("\nShutting down server...")
     except Exception as e:
-        print(f"Failed to start server: {str(e)}")
+        logger.critical(f"Failed to start Uvicorn server: {e}", exc_info=True)
         sys.exit(1)
 
 if __name__ == "__main__":
