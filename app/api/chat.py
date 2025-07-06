@@ -31,46 +31,38 @@ def get_session(session_id: str) -> Dict[str, Any]:
         }
     return chat_sessions[session_id]
 
+# Path: app/api/chat.py
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(message: ChatMessage, service: RAGService = Depends(get_rag_service)):
     """
-    Handles chat messages using a stateful, state-aware agent model.
+    Handles all chat messages using the final, simplified routing logic.
     """
     try:
         session = get_session(message.session_id)
         history_for_rag = [{"question": h.question, "response": h.response} for h in session["history"]]
         
-        # Determine if a document is loaded in the current session
-        document_is_loaded = "document_context" in session and session["document_context"] is not None
-
-        # The router now uses the document_is_loaded status to make a better decision
-        determined_mode = service.determine_conversational_mode(
-            query=message.message,
-            history=history_for_rag,
-            document_in_session=document_is_loaded
-        )
-        session["mode"] = determined_mode
+        doc_context = session.get("document_context")
+        
+        # If there is a document in the session, we must use the router to decide the context.
+        if doc_context:
+            # The router now only needs the user's query to make a decision.
+            determined_mode = service.determine_conversational_mode(query=message.message)
+            session["mode"] = determined_mode
+        else:
+            # If no document is in session, we are always in General Q&A mode.
+            session["mode"] = "GENERAL_QA"
         
         logger.info(f"--- ChatEndpoint: Mode for session {message.session_id} set to: {session['mode']} ---")
 
-        # Execute the appropriate RAG method based on the determined mode
-        if session["mode"] == "DOCUMENT_QA" and document_is_loaded:
-            # This logic correctly handles both simple (full_text) and complex (chunks) documents
-            doc_context = session["document_context"]
-            if "full_text" in doc_context:
-                result = service.query_simple_document(
-                    question=message.message,
-                    full_text=doc_context["full_text"],
-                    chat_history=history_for_rag
-                )
-            else: # Fallback for complex documents, not used in your current flow but good practice
-                 result = service.query_with_context(
-                    question=message.message,
-                    chat_history=history_for_rag,
-                    document_chunks=doc_context.get("chunks", [])
-                )
-        else:
-            # This path is taken if the router decides GENERAL_KNOWLEDGE_BASE
+        # Execute the appropriate RAG method
+        if session["mode"] == "DOCUMENT_QA" and doc_context:
+            result = service.query_simple_document(
+                question=message.message,
+                full_text=doc_context["full_text"],
+                chat_history=history_for_rag
+            )
+        else: # This path is now correctly taken when the router decides GENERAL_KNOWLEDGE_BASE
             logger.info("--- ChatEndpoint: Executing query against general knowledge base. ---")
             result = service.query(message.message, history_for_rag)
 
@@ -122,12 +114,11 @@ async def clear_chat_history(session_id: str):
 async def upload_and_chat(
     file: UploadFile = File(...),
     message: str = Form(...),
-    session_id: str = Form(...),  # This is the corrected line
+    session_id: str = Form(...),
     service: RAGService = Depends(get_rag_service)
 ):
     """
-    Handles the upload of a simple document. It now correctly uses the session_id
-    provided by the client to maintain the conversation context.
+    Handles document upload, creates a summary for context, and answers the first question.
     """
     try:
         filename = file.filename
@@ -146,17 +137,26 @@ async def upload_and_chat(
         if not full_text:
             raise HTTPException(status_code=500, detail="Could not extract text from the document.")
 
+        # --- Create and store the document summary ---
+        document_summary = service._create_document_summary(full_text)
+        
+        # Answer the user's first question about the document
         result = service.query_simple_document(
             question=message,
             full_text=full_text,
             chat_history=[]
         )
         
-        # This now uses the correct session_id from the form
+        # Get the session and store all necessary context
         session = get_session(session_id)
-        session["document_context"] = {"filename": filename, "full_text": full_text}
+        session["document_context"] = {
+            "filename": filename,
+            "full_text": full_text,
+            "summary": document_summary  # Store the new summary
+        }
         session["mode"] = "DOCUMENT_QA"
         
+        # Store the first interaction in history
         session["history"].append(ChatHistory(
             question=message,
             response=result["response"],

@@ -65,29 +65,19 @@ Respuesta:"""
 # NOTE: These prompts are system-facing and work effectively in English
 # regardless of the user's language, as they operate on the logic of the
 # conversation, not the specific language semantics of the user's query.
+
 ROUTER_PROMPT = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
-You are an expert router for a conversational AI agent. Your primary job is to decide if a user's query should be answered using a specific document they have uploaded or by searching a general knowledge base.
+You are a precise routing machine. Your only job is to classify the user's query based on its content. Follow these rules strictly:
 
-You will be given three pieces of information:
-1.  **Document in Session**: A simple "Yes" or "No" indicating if a document is currently loaded in the user's session.
-2.  **Conversation History**: The recent chat history.
-3.  **Current User Query**: The user's latest question.
+1.  **If the query contains a specific form number (like "G-844", "I-130", "G-28"), you MUST classify it as `GENERAL_KNOWLEDGE_BASE`.**
+2.  **If the query asks for a general legal definition or a concept (like "what is asylum?", "asilo politico"), you MUST classify it as `GENERAL_KNOWLEDGE_BASE`.**
+3.  **If the query asks for a summary, or mentions people, specific dates, or events that would be in a personal letter, classify it as `DOCUMENT_HANDLER`.**
 
-Your task is to classify the query into one of two categories:
-1.  **DOCUMENT_HANDLER**: Choose this if the user's query is about the uploaded document. **If "Document in Session" is "Yes", you should strongly prefer this handler**, unless the user is very clearly asking a completely unrelated, general knowledge question. Phrases like "in the document," "the file I sent," or asking about specific content from the history strongly suggest this handler.
-2.  **GENERAL_KNOWLEDGE_BASE**: Choose this only if the user's query is clearly a general question unrelated to the document or the immediate conversation history.
+Analyze the user's query below and provide ONLY the classification.
 
----
-Document in Session: {document_in_session}
----
-Conversation History:
-{history}
----
-Current User Query:
-"{query}"
----
+User Query: "{query}"
 
-Based on all the information, which handler should be used? Respond with ONLY the category name: **DOCUMENT_HANDLER** or **GENERAL_KNOWLEDGE_BASE**.<|eot_id|><|start_header_id|>user<|end_header_id|>
+Classification:<|eot_id|><|start_header_id|>user<|end_header_id|>
 {query}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 """
 
@@ -128,6 +118,16 @@ Eres un especialista experto en análisis de documentos. Tu tarea es analizar la
 Pregunta del Usuario: "{question}"
 
 Basado en tu análisis experto, responde con SOLO UNA de las siguientes dos palabras: **HOLISTICO** or **ESPECIFICO**.
+"""
+
+DOCUMENT_SUMMARY_PROMPT = """
+Read the following document text and provide a very concise, one-sentence summary. This summary will be used by an AI assistant to remember the document's main topic. Focus on the primary subject, names, and purpose of the document.
+
+--- Document Text ---
+{full_text}
+---
+
+One-sentence summary:
 """
 
 # ==========================================================================

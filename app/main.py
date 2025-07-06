@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse
 from pathlib import Path
 import uvicorn
 import logging
+import subprocess
 from app.api import chat, documents, auth
 from app.core.config import API_TITLE, API_VERSION, DESRIPTION, HOST, PORT
 
@@ -80,14 +81,26 @@ async def health_check():
 # --- Server Startup ---
 
 if __name__ == "__main__":
-    logger.info(f"Starting server at http://{HOST}:{PORT}")
     try:
+        tailscale_ip = subprocess.check_output(['tailscale', 'ip', '-4']).decode().strip()
+        logger.info(f"Starting server at http://{tailscale_ip}:{PORT}")
         uvicorn.run(
             "app.main:app",
-            host=HOST,
+            host=tailscale_ip,
             port=PORT,
             reload=True, # Enables auto-reload for development
             log_level="info"
         )
-    except Exception as e:
-        logger.critical(f"Failed to start server: {e}", exc_info=True)
+    except Exception as e: # Catch all exceptions here
+        if "tailscale" in str(e).lower() or "no such file or directory" in str(e).lower():
+            logger.info("Tailscale command failed or not found. Falling back to default host.")
+            logger.info(f"Starting server at http://{HOST}:{PORT}")
+            uvicorn.run(
+                "app.main:app",
+                host=HOST,
+                port=PORT,
+                reload=True, # Enables auto-reload for development
+                log_level="info"
+            )
+        else:
+            logger.critical(f"Failed to start server: {e}", exc_info=True)

@@ -6,7 +6,7 @@ from app.services.embeddings import EmbeddingService
 from app.services.vectorstore import VectorStoreService
 from app.services.data_loader import DocumentProcessor
 from app.core.config import CONTEXT_HISTORY_MESSAGES, GOOGLE_PROJECT_ID, GOOGLE_LOCATION, GOOGLE_PROCESSOR_ID, MAX_CHUNKS_RETRIEVED
-from app.core.prompts import get_system_prompt, get_prompt_template, get_query_intent_prompt, LANGUAGE_DETECTION_PROMPT, ROUTER_PROMPT, EXTRACTION_PROMPT_TEMPLATE
+from app.core.prompts import get_system_prompt, get_prompt_template, get_query_intent_prompt, LANGUAGE_DETECTION_PROMPT, ROUTER_PROMPT, EXTRACTION_PROMPT_TEMPLATE,DOCUMENT_SUMMARY_PROMPT
 import logging
 import os
 import re
@@ -32,8 +32,21 @@ class RAGService:
             logger.error(f"Failed to initialize RAG service: {e}", exc_info=True)
             raise
 
+    def _create_document_summary(self, full_text: str) -> str:
+        """
+        Uses an LLM call to create a concise summary of the document text.
+        This summary is used as context for the router.
+        """
+        try:            
+            prompt = DOCUMENT_SUMMARY_PROMPT.format(full_text=full_text)
+            
+            summary = self.llm_client.generate_response(prompt).strip()
+            logger.info(f"--- RAGService: Generated document summary: '{summary}' ---")
+            return summary
+        except Exception as e:
+            logger.error(f"--- RAGService: Failed to create document summary: {e} ---", exc_info=True)
+            return "No summary could be generated." # Return a default value on error
 
-    # Replace the existing _get_query_intent method with this one
     def _get_query_intent(self, question: str, language: str) -> str:
         """
         Uses the LLM to classify the user's query intent as either HOLISTIC or SPECIFIC.
@@ -175,36 +188,29 @@ class RAGService:
             logger.error(f"--- RAGService: Error during general query: {e} ---", exc_info=True)
             raise
 
-    def determine_conversational_mode(self, query: str, history: List[Dict[str, Any]], document_in_session: bool) -> str:
+    def determine_conversational_mode(self, query: str) -> str:
         """
-        Uses an LLM call to classify the user's query. This version is "state-aware"
-        as it knows if a document is currently in the session.
+        Uses a simplified, rule-based prompt to classify the query's intent
+        based solely on the query's content.
         """
         try:
-            logger.info(f"--- RAGService: Determining conversational mode (Document in session: {document_in_session}) ---")
+            logger.info("--- RAGService: Determining conversational mode (Simplified, Rule-Based Router) ---")
             
-            # Format the necessary inputs for the new prompt
-            formatted_history = self._format_history_for_router(history)
-            doc_status = "Yes" if document_in_session else "No"
+            prompt = ROUTER_PROMPT.format(query=query)
             
-            # Use the new, more robust router prompt
-            prompt = ROUTER_PROMPT.format(
-                document_in_session=doc_status,
-                history=formatted_history,
-                query=query
-            )
+            response = self.llm_client.generate_response(prompt).strip().upper()
+            # Clean the response to handle potential markdown
+            cleaned_response = re.sub(r'[^A-Z_]', '', response)
             
-            logger.debug(f"State-aware router prompt: {prompt}")
-            response = self.llm_client.generate_response(prompt).strip()
-            
-            logger.info(f"Router raw decision: '{response}'")
+            logger.info(f"Router raw response: '{response}', Cleaned: '{cleaned_response}'")
 
-            if "DOCUMENT_HANDLER" in response:
-                logger.info("--- Router decision: DOCUMENT_HANDLER ---")
-                return "DOCUMENT_QA"
-            else:
+            if "GENERAL_KNOWLEDGE_BASE" in cleaned_response:
                 logger.info("--- Router decision: GENERAL_KNOWLEDGE_BASE ---")
                 return "GENERAL_QA"
+            else:
+                # Default to Document Handler if the response is anything else
+                logger.info("--- Router decision: DOCUMENT_HANDLER ---")
+                return "DOCUMENT_QA"
 
         except Exception as e:
             logger.error(f"Error in determining conversational mode: {e}", exc_info=True)
