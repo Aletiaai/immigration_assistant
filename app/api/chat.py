@@ -31,50 +31,46 @@ def get_session(session_id: str) -> Dict[str, Any]:
         }
     return chat_sessions[session_id]
 
-# Path: app/api/chat.py
-
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(message: ChatMessage, service: RAGService = Depends(get_rag_service)):
     """
-    Handles chat messages using a stateful agent model.
-    It now gets the session_id from the message body to maintain conversation state.
+    Handles chat messages using a stateful, state-aware agent model.
     """
     try:
-        # Get the session using the ID from the message body
         session = get_session(message.session_id)
-        
         history_for_rag = [{"question": h.question, "response": h.response} for h in session["history"]]
-
-        # --- AGENT LOGIC ---
-        if session.get("document_context"):
-            logger.info(f"--- ChatEndpoint: Document found in session {message.session_id}. Calling router. ---")
-            determined_mode = service.determine_conversational_mode(
-                query=message.message,
-                history=history_for_rag
-            )
-            session["mode"] = determined_mode
         
-        logger.info(f"--- ChatEndpoint: Current mode for session {message.session_id} is: {session['mode']} ---")
+        # Determine if a document is loaded in the current session
+        document_is_loaded = "document_context" in session and session["document_context"] is not None
 
-        # Execute the appropriate RAG method based on the current mode
-        if session["mode"] == "DOCUMENT_QA" and session.get("document_context"):
+        # The router now uses the document_is_loaded status to make a better decision
+        determined_mode = service.determine_conversational_mode(
+            query=message.message,
+            history=history_for_rag,
+            document_in_session=document_is_loaded
+        )
+        session["mode"] = determined_mode
+        
+        logger.info(f"--- ChatEndpoint: Mode for session {message.session_id} set to: {session['mode']} ---")
+
+        # Execute the appropriate RAG method based on the determined mode
+        if session["mode"] == "DOCUMENT_QA" and document_is_loaded:
+            # This logic correctly handles both simple (full_text) and complex (chunks) documents
             doc_context = session["document_context"]
-            
             if "full_text" in doc_context:
-                logger.info("--- ChatEndpoint: Executing query against simple document text. ---")
                 result = service.query_simple_document(
                     question=message.message,
                     full_text=doc_context["full_text"],
                     chat_history=history_for_rag
                 )
-            else:
-                logger.info("--- ChatEndpoint: Executing query against complex document context. ---")
-                result = service.query_with_context(
+            else: # Fallback for complex documents, not used in your current flow but good practice
+                 result = service.query_with_context(
                     question=message.message,
                     chat_history=history_for_rag,
                     document_chunks=doc_context.get("chunks", [])
                 )
         else:
+            # This path is taken if the router decides GENERAL_KNOWLEDGE_BASE
             logger.info("--- ChatEndpoint: Executing query against general knowledge base. ---")
             result = service.query(message.message, history_for_rag)
 
@@ -93,7 +89,6 @@ async def chat_endpoint(message: ChatMessage, service: RAGService = Depends(get_
             timestamp=response.timestamp
         ))
         
-        logger.info(f"--- ChatEndpoint: Response prepared for query: {message.message} ---")
         return response
         
     except Exception as e:

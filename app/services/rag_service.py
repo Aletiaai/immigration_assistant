@@ -175,22 +175,40 @@ class RAGService:
             logger.error(f"--- RAGService: Error during general query: {e} ---", exc_info=True)
             raise
 
-    def determine_conversational_mode(self, query: str, history: List[Dict[str, Any]]) -> str:
-        """Uses an LLM call to classify the user's query and determine the conversational mode."""
+    def determine_conversational_mode(self, query: str, history: List[Dict[str, Any]], document_in_session: bool) -> str:
+        """
+        Uses an LLM call to classify the user's query. This version is "state-aware"
+        as it knows if a document is currently in the session.
+        """
         try:
-            logger.info("--- RAGService: Determining conversational mode ---")
-            formatted_history = self._format_history_for_router(history)
-            prompt = ROUTER_PROMPT.format(history=formatted_history, query=query)
+            logger.info(f"--- RAGService: Determining conversational mode (Document in session: {document_in_session}) ---")
             
+            # Format the necessary inputs for the new prompt
+            formatted_history = self._format_history_for_router(history)
+            doc_status = "Yes" if document_in_session else "No"
+            
+            # Use the new, more robust router prompt
+            prompt = ROUTER_PROMPT.format(
+                document_in_session=doc_status,
+                history=formatted_history,
+                query=query
+            )
+            
+            logger.debug(f"State-aware router prompt: {prompt}")
             response = self.llm_client.generate_response(prompt).strip()
+            
             logger.info(f"Router raw decision: '{response}'")
 
-            return "DOCUMENT_QA" if "DOCUMENT_HANDLER" in response else "GENERAL_QA"
-        except Exception as e:
-            logger.error(f"Error in determine_conversational_mode: {e}", exc_info=True)
-            return "GENERAL_QA"
+            if "DOCUMENT_HANDLER" in response:
+                logger.info("--- Router decision: DOCUMENT_HANDLER ---")
+                return "DOCUMENT_QA"
+            else:
+                logger.info("--- Router decision: GENERAL_KNOWLEDGE_BASE ---")
+                return "GENERAL_QA"
 
-    # --- Helper Methods ---
+        except Exception as e:
+            logger.error(f"Error in determining conversational mode: {e}", exc_info=True)
+            return "GENERAL_QA" # Default to general on error
 
     def _process_and_enrich_chunks(self, file_path: str) -> List[Dict]:
         """Internal method to handle Document AI chunking and question enrichment."""

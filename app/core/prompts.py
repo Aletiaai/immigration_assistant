@@ -66,19 +66,28 @@ Respuesta:"""
 # regardless of the user's language, as they operate on the logic of the
 # conversation, not the specific language semantics of the user's query.
 ROUTER_PROMPT = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
-You are an expert AI routing agent responsible for directing user queries to the correct processing module. Analyze the conversation history and the current query, then decide which category the query belongs to.
+You are an expert router for a conversational AI agent. Your primary job is to decide if a user's query should be answered using a specific document they have uploaded or by searching a general knowledge base.
 
-Categories:
-1. **DOCUMENT_HANDLER** – Select this if the query is a follow-up question or references the content of a previously uploaded document.
-2. **GENERAL_KNOWLEDGE_BASE** – Select this if the query introduces a new topic, asks a general question, or does not refer to any previously discussed document.
+You will be given three pieces of information:
+1.  **Document in Session**: A simple "Yes" or "No" indicating if a document is currently loaded in the user's session.
+2.  **Conversation History**: The recent chat history.
+3.  **Current User Query**: The user's latest question.
 
-Your response must contain only the category name: DOCUMENT_HANDLER or GENERAL_KNOWLEDGE_BASE. Do not include explanations or additional text.
+Your task is to classify the query into one of two categories:
+1.  **DOCUMENT_HANDLER**: Choose this if the user's query is about the uploaded document. **If "Document in Session" is "Yes", you should strongly prefer this handler**, unless the user is very clearly asking a completely unrelated, general knowledge question. Phrases like "in the document," "the file I sent," or asking about specific content from the history strongly suggest this handler.
+2.  **GENERAL_KNOWLEDGE_BASE**: Choose this only if the user's query is clearly a general question unrelated to the document or the immediate conversation history.
 
---- Conversation History ---
+---
+Document in Session: {document_in_session}
+---
+Conversation History:
 {history}
+---
+Current User Query:
+"{query}"
+---
 
---- Current User Query ---
-{query}<|eot_id|><|start_header_id|>user<|end_header_id|>
+Based on all the information, which handler should be used? Respond with ONLY the category name: **DOCUMENT_HANDLER** or **GENERAL_KNOWLEDGE_BASE**.<|eot_id|><|start_header_id|>user<|end_header_id|>
 {query}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 """
 
