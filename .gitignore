@@ -27,22 +27,6 @@ Thumbs.db
 
 # Environment variables
 .env
-<<<<<<< HEAD
-
-# Data base
-*/data/
-<<<<<<< HEAD
-*/raw/
-*/vectorestore/
-<<<<<<< HEAD
-*/processed/
-=======
->>>>>>> 4499d3e (The initial version of the RAG is running smoothly)
-=======
-*/processed/
->>>>>>> ea73ff7 (User-document querries processed locally and faster)
-=======
 data/raw/
 data/vectorstore/
 data/processed/
->>>>>>> 3a27432 (Fix .gitignore to exclude vectorstore directory)
