@@ -55,9 +55,14 @@ MAX_CHUNKS_RETRIEVED = 3
 # --- Admin Authentication ---
 # For session validation and password hashing
 SECRET_KEY = secrets.token_urlsafe(32)
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123") # Load from .env or use default
-ADMIN_PASSWORD_HASH = hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
 
+# This dictionary now acts as our simple user database
+USERS = {
+    'marko': '$2b$12$WK0LsLZBH0nUawDgaKTjyusKkIIJpLExbr8SwjwB1UD6PKo5He.Ry',
+    'benji': '$2b$12$l9qH/CNfzDkTVGzR8s3PvOtH.ShLocwX6cl9C5nuDXObdyzqNXXOu',
+    'admin_benji': '$2b$12$62WQAcDocKu5C/xnjHS0Desxj6tm1b4w8zKbHPAzW3oB/MI/.9OF2',
+}
+#admin123
 # For JWT token generation
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-super-secret-key-that-is-long-and-random") # Load from .env
 TOKEN_EXPIRE_HOURS = 8

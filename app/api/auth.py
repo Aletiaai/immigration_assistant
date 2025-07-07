@@ -1,67 +1,42 @@
-from fastapi import APIRouter, HTTPException, Depends, status
-from datetime import datetime
-from app.models.auth import LoginRequest, LoginResponse, AuthStatus
-from app.core.auth import AuthService, get_current_admin
-import logging
+#app/api/auth.py
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from datetime import timedelta
+
+from app.models.auth import Token
+from app.core.auth import authenticate_user, create_access_token, get_current_user
+from app.core.config import TOKEN_EXPIRE_HOURS
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
-@router.post("/auth/login", response_model=LoginResponse)
-async def login(request: LoginRequest):
-    """Admin login endpoint"""
-    try:
-        if not AuthService.verify_password(request.password):
-            logger.warning("Invalid login attempt")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid password"
-            )
-        
-        token = AuthService.create_access_token()
-        logger.info("Admin login successful")
-        
-        return LoginResponse(
-            access_token=token,
-            message="Login successful"
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Login error: {e}")
+@router.post("/auth/token", response_model=Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    Handles user login. Takes username and password from a form,
+    authenticates the user against the USERS dictionary, and returns a JWT token.
+    """
+    # This now checks any user from your USERS dictionary
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Login failed"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    access_token_expires = timedelta(hours=TOKEN_EXPIRE_HOURS)
+    access_token = create_access_token(
+        data={"sub": user}, expires_delta=access_token_expires
+    )
+    
+    return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/auth/verify", response_model=AuthStatus)
-async def verify_auth(admin: str = Depends(get_current_admin)):
-    """Verify current authentication status"""
-    try:
-        return AuthStatus(
-            authenticated=True,
-            message="Authentication valid"
-        )
-    except Exception as e:
-        logger.error(f"Auth verification error: {e}")
-        return AuthStatus(
-            authenticated=False,
-            message="Authentication invalid"
-        )
 
-@router.post("/auth/logout", response_model=AuthStatus)
-async def logout(admin: str = Depends(get_current_admin)):
-    """Logout endpoint (client should discard token)"""
-    try:
-        logger.info("Admin logout")
-        return AuthStatus(
-            authenticated=False,
-            message="Logged out successfully"
-        )
-    except Exception as e:
-        logger.error(f"Logout error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Logout failed"
-        )
+@router.get("/auth/verify")
+async def verify_token(current_user: str = Depends(get_current_user)):
+    """
+    An endpoint to verify if a token is valid.
+    If the request reaches here, the token is valid.
+    """
+    return {"username": current_user, "status": "ok"}

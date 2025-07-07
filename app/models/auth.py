@@ -1,17 +1,19 @@
+# Path: app/models/auth.py
+
 from pydantic import BaseModel
-from datetime import datetime
 from typing import Optional
 
-class LoginRequest(BaseModel):
-    password: str
-
-class LoginResponse(BaseModel):
+class Token(BaseModel):
+    """
+    Defines the data structure for the access token response
+    when a user successfully logs in.
+    """
     access_token: str
-    token_type: str = "bearer"
-    expires_in: int = 28800  # 8 hours in seconds
-    message: str = "Login successful"
+    token_type: str
 
-class AuthStatus(BaseModel):
-    authenticated: bool
-    message: str
-    timestamp: datetime = datetime.now()
+class TokenData(BaseModel):
+    """
+    Defines the data structure for the information encoded
+    within a JWT (JSON Web Token).
+    """
+    username: Optional[str] = None

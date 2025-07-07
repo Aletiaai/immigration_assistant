@@ -6,10 +6,11 @@ from datetime import datetime
 from app.models.chat import ChatMessage, ChatResponse, ChatHistory, DocumentProcessingResponse
 from app.services.rag_service import RAGService
 from app.core.dependencies import get_rag_service
+from app.core.auth import get_current_user
 import logging
 import io
 import docx
-import fitz # PyMuPDF
+import fitz 
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -31,14 +32,14 @@ def get_session(session_id: str) -> Dict[str, Any]:
         }
     return chat_sessions[session_id]
 
-# Path: app/api/chat.py
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_endpoint(message: ChatMessage, service: RAGService = Depends(get_rag_service)):
+async def chat_endpoint(message: ChatMessage, service: RAGService = Depends(get_rag_service), current_user: str = Depends(get_current_user)):
     """
     Handles all chat messages using the final, simplified routing logic.
     """
     try:
+        logger.info(f"Chat message from user: {current_user}")
         session = get_session(message.session_id)
         history_for_rag = [{"question": h.question, "response": h.response} for h in session["history"]]
         
@@ -88,23 +89,26 @@ async def chat_endpoint(message: ChatMessage, service: RAGService = Depends(get_
         raise HTTPException(status_code=500, detail=f"Chat processing failed: {e}")
     
 @router.get("/chat/history/{session_id}")
-async def get_chat_history(session_id: str):
+async def get_chat_history(session_id: str, current_user: str = Depends(get_current_user)):
     """Retrieves all data for a given session for debugging."""
     try:
+        if session_id not in chat_sessions:
+            raise HTTPException(status_code=404, detail="Session not found.")
+        
         session = get_session(session_id)
-        logger.info(f"--- ChatEndpoint: Retrieved history for session {session_id} ---")
+        logger.info(f"--- History for session {session_id} retrieved by user {current_user} ---")
         return {"session_id": session_id, "history": session["history"], "document_context": session.get("document_context"), "mode": session.get("mode")}
     except Exception as e:
         logger.error(f"--- ChatEndpoint: Failed to retrieve chat history: {str(e)} ---", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to retrieve chat history: {str(e)}")
 
 @router.delete("/chat/history/{session_id}")
-async def clear_chat_history(session_id: str):
+async def clear_chat_history(session_id: str,current_user: str = Depends(get_current_user)):
     """Clears all data for a session."""
     try:
         if session_id in chat_sessions:
             del chat_sessions[session_id]
-            logger.info(f"--- ChatEndpoint: Cleared all data for session {session_id} ---")
+            logger.info(f"--- Chat history for session {session_id} cleared by user {current_user} ---")
         return {"message": "Chat history and document context cleared", "session_id": session_id}
     except Exception as e:
         logger.error(f"--- ChatEndpoint: Failed to clear chat history: {str(e)} ---", exc_info=True)
@@ -115,12 +119,14 @@ async def upload_and_chat(
     file: UploadFile = File(...),
     message: str = Form(...),
     session_id: str = Form(...),
-    service: RAGService = Depends(get_rag_service)
+    service: RAGService = Depends(get_rag_service),
+    current_user: str = Depends(get_current_user)
 ):
     """
     Handles document upload, creates a summary for context, and answers the first question.
     """
     try:
+        logger.info(f"Document upload for chat by user: {current_user}")
         filename = file.filename
         content = await file.read()
         full_text = ""
@@ -152,7 +158,7 @@ async def upload_and_chat(
         session["document_context"] = {
             "filename": filename,
             "full_text": full_text,
-            "summary": document_summary  # Store the new summary
+            "summary": document_summary 
         }
         session["mode"] = "DOCUMENT_QA"
         

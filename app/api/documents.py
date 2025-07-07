@@ -26,35 +26,27 @@ async def upload_document(
     Handles the upload and processing of a document for the knowledge base.
     This endpoint is protected and requires admin authentication.
     """
-    logger.info(f"--- Document Upload endpoint for file: {file.filename} ---")
+    logger.info(f"--- Document Upload endpoint for file: {file.filename} by admin: {admin} ---")
     try:
         if not file.filename.lower().endswith('.pdf'):
-            raise HTTPException(status_code=400, detail="Only PDF files are supported for the knowledge base.")
-
+            raise HTTPException(status_code=400, detail="Only PDF files are supported.")
         file_path = RAW_DATA_DIR / file.filename
-        
         with open(file_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
+            buffer.write(await file.read())
         
-        logger.info(f"--- File saved, starting processing: {file_path} ---")
         success = service.process_document(str(file_path))
-        
         if success:
-            logger.info(f"--- Document processing successful: {file.filename} ---")
             return DocumentUpload(
                 filename=file.filename,
                 status="processed",
-                message="Document successfully processed and indexed.",
+                message="Document successfully processed.",
                 timestamp=datetime.now()
             )
         else:
-            logger.error(f"--- Document processing failed for: {file.filename} ---")
-            raise HTTPException(status_code=500, detail="Document processing failed by the service.")
-
+            raise HTTPException(status_code=500, detail="Document processing failed.")
     except Exception as e:
-        logger.error(f"--- Exception in /documents/upload: {e} ---", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
+        logger.error(f"Upload error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/documents/list")
 async def list_documents(admin: str = Depends(get_current_admin)):
