@@ -4,6 +4,7 @@ import sys
 import uvicorn
 import subprocess
 import logging
+import argparse
 from pathlib import Path
 
 # --- Setup Project Path ---
@@ -25,6 +26,12 @@ def main():
     Main entry point for starting the RAG chat system.
     Handles dynamic host detection and robust error handling.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Start the RAG chat system")
+    parser.add_argument("--no-tailscale", action="store_true", 
+                       help="Disable Tailscale IP detection and use default host")
+    args = parser.parse_args()
+
     try:
         # Import configuration after path setup
         from app.core.config import HOST, PORT, API_TITLE
@@ -35,16 +42,20 @@ def main():
         sys.exit(1)
 
     # --- Host Detection ---
-    # Try to get the Tailscale IP, but fall back gracefully
     run_host = HOST
-    try:
-        tailscale_ip = subprocess.check_output(['tailscale', 'ip', '-4'], text=True).strip()
-        if tailscale_ip:
-            run_host = tailscale_ip
-            logger.info(f"Tailscale IP detected. Using {run_host} as host.")
-    except (FileNotFoundError, subprocess.CalledProcessError) as e:
-        logger.warning(f"Tailscale command not found or failed: {e}. Falling back to default host: {HOST}")
-        run_host = HOST
+    
+    if not args.no_tailscale:
+        # Try to get the Tailscale IP, but fall back gracefully
+        try:
+            tailscale_ip = subprocess.check_output(['tailscale', 'ip', '-4'], text=True).strip()
+            if tailscale_ip:
+                run_host = tailscale_ip
+                logger.info(f"Tailscale IP detected. Using {run_host} as host.")
+        except (FileNotFoundError, subprocess.CalledProcessError) as e:
+            logger.warning(f"Tailscale command not found or failed: {e}. Falling back to default host: {HOST}")
+            run_host = HOST
+    else:
+        logger.info(f"Tailscale detection disabled. Using configured host: {HOST}")
 
     # --- Server Startup ---
     try:

@@ -64,7 +64,7 @@ USERS = {
 }
 #admin123
 # For JWT token generation
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-super-secret-key-that-is-long-and-random") # Load from .env
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-super-secret-key-that-is-long-and-random")
 TOKEN_EXPIRE_HOURS = 8
 
 # --- Ensure Directories Exist ---
