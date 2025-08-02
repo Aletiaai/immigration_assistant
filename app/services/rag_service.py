@@ -5,8 +5,9 @@ from app.services.llm_client import OllamaClient
 from app.services.embeddings import EmbeddingService
 from app.services.vectorstore import VectorStoreService
 from app.services.data_loader import DocumentProcessor
-from app.core.config import CONTEXT_HISTORY_MESSAGES, GOOGLE_PROJECT_ID, GOOGLE_LOCATION, GOOGLE_PROCESSOR_ID, MAX_CHUNKS_RETRIEVED
-from app.core.prompts import get_system_prompt, get_prompt_template, get_query_intent_prompt, LANGUAGE_DETECTION_PROMPT, ROUTER_PROMPT, EXTRACTION_PROMPT_TEMPLATE,DOCUMENT_SUMMARY_PROMPT
+from app.core.config import CONTEXT_HISTORY_MESSAGES, GOOGLE_PROJECT_ID, GOOGLE_LOCATION, GOOGLE_PROCESSOR_ID, MAX_CHUNKS_RETRIEVED, LARGE_DOCUMENT_THRESHOLD
+from app.core.prompts import get_system_prompt, get_prompt_template, get_query_intent_prompt, LANGUAGE_DETECTION_PROMPT, ROUTER_PROMPT, EXTRACTION_PROMPT_TEMPLATE,DOCUMENT_SUMMARY_PROMPT, PER_CHUNK_TASK_PROMPT, COMBINE_RESULTS_PROMPT, TRANSLATION_INTENT_PROMPT, TRANSLATE_CHUNK_PROMPT
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 import logging
 import os
 import re
@@ -83,59 +84,68 @@ class RAGService:
 
     def query_simple_document(self, question: str, full_text: str, chat_history: List[Dict]) -> Dict:
         """
-        Answers a question about a simple document, using multilingual intent detection.
+        Acts as an intelligent dispatcher. It now identifies translation requests first
+        and routes them to a dedicated pipeline, separating them from Q&A tasks.
         """
-        logger.info("--- RAGService: Querying simple document, determining intent first. ---")
+        logger.info("--- RAGService: Dispatching query for simple document... ---")
         language = self._detect_language(question)
-        
-        # Pass the detected language to the intent classifier
+
+        # --- First, check for translation intent ---
+        if self._is_translation_request(question):
+            # If it's a translation, use the dedicated batch pipeline regardless of document size.
+            logger.info("--- Dispatcher: Translation intent detected. Routing to batch translation pipeline. ---")
+            return self._translate_document_in_batches(full_text, language)
+
+        # --- If NOT a translation, proceed with your existing Q&A/Summarization logic ---
+        logger.info("--- Intent is not translation. Proceeding with standard Q&A/Summarization logic. ---")
         intent = self._get_query_intent(question, language)
-        
+
+        is_large_document = len(full_text) > LARGE_DOCUMENT_THRESHOLD
+
         try:
-            relevant_context = ""
-            if intent == "HOLISTIC":
-                logger.info("--- RAGService: Holistic intent detected. Using full document text. ---")
-                relevant_context = full_text
-            else: # intent == "SPECIFIC"
-                logger.info("--- RAGService: Specific intent detected. Extracting relevant snippets. ---")
-                extraction_prompt = EXTRACTION_PROMPT_TEMPLATE.format(
-                    full_text=full_text,
+            # --- STRATEGY 1: Holistic query on a LARGE document ---
+            if is_large_document and intent == "HOLISTIC":
+                logger.info(f"--- Dispatcher: Large document ({len(full_text)} chars) and HOLISTIC intent detected. Using Process-in-Stages pipeline. ---")
+                return self._process_large_document_holistically(question, full_text, language)
+
+            # --- STRATEGY 2: All other cases ---
+            else:
+                if is_large_document:
+                    logger.info(f"--- Dispatcher: Large document but SPECIFIC intent. Using snippet extraction. ---")
+                else:
+                    logger.info(f"--- Dispatcher: Small document ({len(full_text)} chars). Using standard Q&A. ---")
+
+                relevant_context = ""
+                if intent == "HOLISTIC":
+                    relevant_context = full_text
+                else: # Specific query
+                    extraction_prompt = EXTRACTION_PROMPT_TEMPLATE.format(full_text=full_text, question=question)
+                    relevant_context = self.llm_client.generate_response(extraction_prompt)
+                    if "no relevant information found" in relevant_context.lower():
+                        return {
+                            "response": "I couldn't find any information in the document for your question." if language == "english" else "No encontré información en el documento para tu pregunta.",
+                            "sources": [], "language": language
+                        }
+
+                # --- Final Answer Synthesis (for Strategy 2) ---
+                history_text = self._format_chat_history(chat_history)
+                system_message = get_system_prompt(language)
+                template = get_prompt_template(language)
+
+                final_prompt = template.format(
+                    system_message=system_message,
+                    context=relevant_context,
+                    chat_history=history_text,
                     question=question
                 )
-                relevant_context = self.llm_client.generate_response(extraction_prompt)
-
-                if "no relevant information found" in relevant_context.lower():
-                    return {
-                        "response": "I couldn't find any information in the document for your question." 
-                                    if language == "english" else 
-                                    "No encontré información en el documento para tu pregunta.",
-                        "sources": [],
-                        "language": language
-                    }
-
-            # --- Final Answer Synthesis ---
-            history_text = self._format_chat_history(chat_history)
-            system_message = get_system_prompt(language)
-            template = get_prompt_template(language)
-            
-            final_prompt = template.format(
-                system_message=system_message,
-                context=relevant_context,
-                chat_history=history_text,
-                question=question
-            )
-
-            logger.info("--- RAGService: Calling LLM for final answer synthesis. ---")
-            final_answer = self.llm_client.generate_response(final_prompt)
-
-            return {"response": final_answer, "sources": [], "language": language}
+                final_answer = self.llm_client.generate_response(final_prompt)
+                return {"response": final_answer, "sources": [], "language": language}
 
         except Exception as e:
-            logger.error(f"Error during simple document query: {e}", exc_info=True)
+            logger.error(f"Error during simple document query dispatch: {e}", exc_info=True)
             return {
-                "response": "Sorry, an error occurred while processing the document." if language == "english" else "Lo siento, ocurrió un error al procesar el documento.",
-                "sources": [],
-                "language": language
+                "response": "Sorry, a critical error occurred while processing your request on the document." if language == "english" else "Lo siento, ocurrió un error crítico al procesar tu solicitud sobre el documento.",
+                "sources": [], "language": language
             }
 
     def process_document(self, file_path: str) -> bool:
@@ -304,3 +314,110 @@ class RAGService:
             return "No history yet."
         parts = [f"User: {turn.get('question', '')}\nAssistant: {turn.get('response', '')}" for turn in history]
         return "\n\n".join(parts)
+    
+    def _process_large_document_holistically(self, user_request: str, full_text: str, language: str) -> Dict[str, any]:
+        """
+        Handles any holistic request on a large document using a Map-Reduce approach.
+        """
+        logger.info(f"--- RAGService: Starting 'Process-in-Stages' pipeline for a large document. ---")
+        
+        # 1. MAP STEP: Break the document into manageable chunks.
+        # We use a chunk size that is safely within the LLM's context window.
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=6000,  # A safe size for Llama 3's 8k context window
+            chunk_overlap=200,
+            length_function=len
+        )
+        chunks = text_splitter.split_text(full_text)
+        logger.info(f"--- Document split into {len(chunks)} chunks for processing. ---")
+
+        partial_results = []
+        total_chunks = len(chunks)
+
+        # 2. MAP STEP: Process each chunk individually.
+        for i, chunk in enumerate(chunks):
+            logger.info(f"--- Processing chunk {i+1}/{total_chunks}... ---")
+            try:
+                # Use the new prompt to apply the user's request to the chunk
+                prompt = PER_CHUNK_TASK_PROMPT.format(
+                    user_request=user_request,
+                    text_chunk=chunk
+                )
+                chunk_result = self.llm_client.generate_response(prompt)
+                partial_results.append(chunk_result)
+            except Exception as e:
+                logger.error(f"--- Error processing chunk {i+1}: {e} ---")
+                partial_results.append(f"\n--- ERROR: A section of the document could not be processed. ---\n")
+
+        # 3. REDUCE STEP: Combine the partial results into a final answer.
+        logger.info("--- All chunks processed. Combining results into a final answer. ---")
+        combined_results = "\n\n---\n\n".join(partial_results)
+        
+        target_language_str = "Spanish" if language == "spanish" else "English"
+
+        final_prompt = COMBINE_RESULTS_PROMPT.format(
+            user_request=user_request,
+            partial_results=combined_results,
+            target_language=target_language_str,
+
+        )
+        
+        final_answer = self.llm_client.generate_response(final_prompt)
+        
+        return {
+            "response": final_answer,
+            "sources": [], # No specific sources, as the whole document was used
+            "language": language
+        }
+    
+    def _is_translation_request(self, user_request: str) -> bool:
+        """
+        Uses an LLM call to determine if the user is asking for a translation.
+        """
+        try:
+            logger.info("--- RAGService: Checking for translation intent... ---")
+            prompt = TRANSLATION_INTENT_PROMPT.format(user_request=user_request)
+            response = self.llm_client.generate_response(prompt).strip().lower()
+            logger.info(f"--- Translation intent response: '{response}' ---")
+            return "yes" in response
+        except Exception as e:
+            logger.error(f"--- Error during translation intent check: {e} ---")
+            return False
+
+    def _translate_document_in_batches(self, full_text: str, language: str) -> Dict[str, any]:
+        """
+        Translates a large document by breaking it into chunks, translating each one,
+        and then reassembling the translated text.
+        """
+        logger.info(f"--- RAGService: Starting batch translation pipeline for a {len(full_text)} character document. ---")
+        
+        target_language = "Spanish" if language == "english" else "English"
+        
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=4000, # Safely below the token limit
+            chunk_overlap=100
+        )
+        chunks = text_splitter.split_text(full_text)
+        logger.info(f"--- Document split into {len(chunks)} chunks for translation. ---")
+
+        translated_chunks = []
+        for i, chunk in enumerate(chunks):
+            logger.info(f"--- Translating chunk {i+1}/{len(chunks)}... ---")
+            try:
+                prompt = TRANSLATE_CHUNK_PROMPT.format(
+                    target_language=target_language,
+                    text_chunk=chunk
+                )
+                translated_chunk = self.llm_client.generate_response(prompt)
+                translated_chunks.append(translated_chunk)
+            except Exception as e:
+                logger.error(f"--- Error translating chunk {i+1}: {e} ---")
+                translated_chunks.append(f"\n--- ERROR: This section could not be translated. ---\n")
+
+        final_translation = "\n\n".join(translated_chunks)
+        
+        return {
+            "response": final_translation,
+            "sources": [],
+            "language": language
+        }

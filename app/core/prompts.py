@@ -130,6 +130,56 @@ Read the following document text and provide a very concise, one-sentence summar
 One-sentence summary:
 """
 
+# This prompt is for the "Map" step
+PER_CHUNK_TASK_PROMPT = """
+You are a highly skilled document processing assistant. You are working on a small chunk of a much larger document.
+Your task is to perform the following user request on ONLY the text chunk provided.
+
+User's Overall Request: "{user_request}"
+
+--- Text Chunk ---
+{text_chunk}
+---
+
+Result for this chunk:
+"""
+
+
+COMBINE_RESULTS_PROMPT = """
+You are a highly skilled synthesis assistant. You have been given a series of partial results from a large document that was processed in chunks.
+Your task is to combine these partial results into a single, final, and coherent answer that fulfills the user's original request.
+
+**Your final answer MUST be in {target_language}.**
+
+User's Original Request: "{user_request}"
+
+--- Partial Results from Document Chunks ---
+{partial_results}
+---
+
+Final, Cohesive Answer (in {target_language}):
+"""
+
+TRANSLATION_INTENT_PROMPT = """
+You are a language analysis bot. Your task is to determine if the user's request is asking for a translation.
+The user might use words like "translate", "traduce", "traducir", or ask "what is this in English/Spanish".
+
+User Request: "{user_request}"
+
+Is the user asking for a translation? Respond with only "Yes" or "No".
+"""
+
+TRANSLATE_CHUNK_PROMPT = """
+You are an expert translator. Your task is to translate the following text into {target_language}.
+Provide only the direct translation. Do not add any extra commentary, introductions, or explanations.
+
+--- Text Chunk ---
+{text_chunk}
+---
+
+Translation (in {target_language}):
+"""
+
 # ==========================================================================
 # 3. Content Enrichment & Utility Prompts
 # ==========================================================================
