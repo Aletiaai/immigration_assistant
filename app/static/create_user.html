@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New User - Admin Panel</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/documents.css"> </head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Admin Panel - Create New User</h1>
+            <nav>
+                <a href="/documents" class="btn btn-nav">← Back to Document Management</a>
+            </nav>
+        </header>
+
+        <div class="main-content-docs">
+            <div class="doc-section card">
+                <h2>New User Details</h2>
+                <p>Create a new user account. They will be able to log in and use the chat interface.</p>
+                
+                <form id="create-user-form" class="user-form">
+                    <div class="form-group">
+                        <label for="username">New Username:</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">New Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+
+                    <div class="form-group-checkbox">
+                        <input type="checkbox" id="is-admin" name="is_admin">
+                        <label for="is-admin">Make this user an Administrator</label>
+                    </div>
+                    
+                    <button type="submit" id="create-user-btn" class="btn btn-primary">Create User</button>
+                    
+                    <div id="status-message" class="status-message"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/create_user.js"></script>
+</body>
+</html>

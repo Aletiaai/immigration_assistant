@@ -54,6 +54,7 @@ function initializeDocumentManagement(token) {
     const kbStatusMessageEl = document.getElementById('kb-status-message');
     const refreshKbStatusBtn = document.getElementById('refresh-kb-status-btn');
     const logoutBtn = document.getElementById('logout-btn');
+    const createUserBtn = document.getElementById('create-user-btn');
 
     const API_BASE_URL = '/api/documents';
     // Use the verified token for all API calls on this page.
@@ -176,9 +177,26 @@ function initializeDocumentManagement(token) {
     fetchKbStatus();
 
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                // Call the logout endpoint to clear server session
+                await fetch('/api/auth/logout', { 
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (error) {
+                console.log('Logout API call failed, but clearing local storage anyway');
+            }
+            
             localStorage.removeItem('user_token'); // Clear the token
             window.location.href = '/login'; // Redirect to login
+        });
+    }
+
+    if (createUserBtn) {
+        createUserBtn.addEventListener('click', async () => {
+            // Now we simply navigate to the page - session authentication handles the rest
+            window.location.href = '/create-user';
         });
     }
 }

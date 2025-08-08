@@ -1,13 +1,15 @@
-#app/main.py
+# app/main.py
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
 import logging
-from app.api import chat, documents, auth
-from app.core.config import API_TITLE, API_VERSION, DESRIPTION
+from app.api import chat, documents, auth, users
+from app.core.config import API_TITLE, API_VERSION, DESRIPTION, SECRET_KEY
+from app.core.auth import get_current_admin, get_session_user, get_session_admin
 
 # Configure basic logging for the application
 logging.basicConfig(
@@ -24,6 +26,9 @@ app = FastAPI(
     description=DESRIPTION
 )
 
+# Add session middleware BEFORE CORS middleware
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, max_age=8*60*60)  # 8 hours
+
 # Add middleware for Cross-Origin Resource Sharing (CORS)
 app.add_middleware(
     CORSMiddleware,
@@ -37,6 +42,7 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(documents.router, prefix="/api", tags=["Documents"])
 app.include_router(auth.router, prefix="/api", tags=["Authentication"])
+app.include_router(users.router, prefix="/api", tags=["Users"])
 
 # --- Static File and HTML Page Serving with Error Handling ---
 
@@ -62,8 +68,8 @@ async def serve_chat_page():
         raise HTTPException(status_code=500, detail="Could not load the main application page.")
 
 @app.get("/documents", response_class=HTMLResponse)
-async def serve_documents_page():
-    """Serves the document management page (documents.html) with robust error handling."""
+async def serve_documents_page(user: dict = Depends(get_session_user)):
+    """Serves the document management page (documents.html) - requires login."""
     html_file = static_path / "documents.html"
     try:
         if not html_file.is_file():
@@ -86,6 +92,19 @@ async def serve_login_page():
     except Exception as e:
         logger.critical(f"Failed to read and serve login.html: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Could not load the login page.")
+    
+@app.get("/create-user", response_class=HTMLResponse)
+async def serve_create_user_page(admin: dict = Depends(get_session_admin)):
+    """Serves the page for admins to create new users - uses session authentication."""
+    html_file = static_path / "create_user.html"
+    try:
+        if not html_file.is_file():
+            raise HTTPException(status_code=404, detail="create_user.html not found.")
+        logger.info(f"Serving create-user page to admin: {admin.get('username')}")
+        return HTMLResponse(content=html_file.read_text())
+    except Exception as e:
+        logger.critical(f"Failed to serve create_user.html: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Could not load the user creation page.")
 
 @app.get("/health")
 async def health_check():

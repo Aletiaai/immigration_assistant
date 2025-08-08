@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // OAuth2 requires form data, not JSON
             const formData = new FormData();
             formData.append('username', username);
             formData.append('password', password);
@@ -33,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch('/api/auth/token', {
                     method: 'POST',
-                    body: formData, // Send as form data
+                    body: formData,
                 });
 
                 const data = await response.json();
@@ -42,20 +41,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(data.detail || 'Login failed.');
                 }
 
-                // IMPORTANT: Use a consistent token name. Let's use 'user_token'.
+                console.log("Login successful. Token received:", data.access_token);
+                
+                // On successful login, save the token and redirect
                 localStorage.setItem('user_token', data.access_token);
+                console.log("Token saved to localStorage.");
+
                 showStatus('Login successful! Redirecting...', 'success');
                 
-                // Check if the user is an admin to decide where to redirect
+                // Redirect based on whether the user is an admin
                 if (username.toLowerCase().includes('admin')) {
-                    window.location.href = '/documents'; // Redirect admins to the document page
+                    window.location.href = '/documents';
                 } else {
-                    window.location.href = '/'; // Redirect regular users to the chat page
+                    window.location.href = '/';
                 }
 
             } catch (error) {
+                console.error('An error occurred during login:', error);
                 showStatus(error.message, 'error');
-            } finally {
+            }finally {
                 setLoading(false);
             }
         });
